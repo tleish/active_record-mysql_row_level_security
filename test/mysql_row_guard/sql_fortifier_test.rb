@@ -27,7 +27,7 @@ describe MysqlRowGuard::SqlFortifier do
     assert_equal '/* SET @my_var := 1 */ my_comments_view', sql_fortifier.to_s
   end
 
-  it 'does not modify queries beginging with the SHOW command' do
+  it 'does not modify queries beginning with the SHOW command' do
     user = MysqlRowGuard::RowUserFake.new
     user.current_master_org_id = 1
     MysqlRowGuard.configure do |config|
@@ -37,6 +37,18 @@ describe MysqlRowGuard::SqlFortifier do
     end
     sql_fortifier = MysqlRowGuard::SqlFortifier.for(sql: 'SHOW comments', configuration: MysqlRowGuard.configuration)
     assert_equal 'SHOW comments', sql_fortifier.to_s
+  end
+
+  it 'does not modify matching string literals' do
+    user = MysqlRowGuard::RowUserFake.new
+    user.current_master_org_id = 1
+    MysqlRowGuard.configure do |config|
+      config.tables = %w[posts comments]
+      config.sql_replacement = 'my_%{table}_view'
+      config.sql_variables = { my_var: 1 }
+    end
+    sql_fortifier = MysqlRowGuard::SqlFortifier.for(sql: 'SELECT * FROM posts WHERE type = "comments"', configuration: MysqlRowGuard.configuration)
+    assert_equal '/* SET @my_var := 1 */ SELECT * FROM my_posts_view WHERE type = "comments"', sql_fortifier.to_s
   end
 
   it 'caches mysql' do
