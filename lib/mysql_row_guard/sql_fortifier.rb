@@ -1,6 +1,11 @@
 module MysqlRowGuard
   class SqlFortifier
-    def self.for(sql:, configuration: MysqlRowGuard.configuration)
+    def self.for(sql:, active_record: nil, configuration: MysqlRowGuard.configuration)
+      yield(active_record) if active_record && block_given?
+
+      # Only fortify once
+      return sql if sql.respond_to?(:mysql_row_guard_cached?)
+
       # Only fortify once
       return sql if sql.respond_to?(:mysql_row_guard_cached?)
 

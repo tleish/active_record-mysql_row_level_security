@@ -20,4 +20,16 @@ describe MysqlRowGuard do
     configuration = MysqlRowGuard.configuration
     assert_equal configuration.init_command, 'SET @foo := 0, @bar := "test"'
   end
+
+  it 'plugin is enabled' do
+    assert MysqlRowGuard.enabled?
+  end
+
+  it 'plugin can be disabled' do
+    assert MysqlRowGuard.enabled?
+    MysqlRowGuard.disable do
+      assert !MysqlRowGuard.enabled?
+    end
+    assert MysqlRowGuard.enabled?
+  end
 end

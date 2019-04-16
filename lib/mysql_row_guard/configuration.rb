@@ -5,6 +5,7 @@ module MysqlRowGuard
     TABLE_CALLBACK = '\k<table>'
     NAME = 'MysqlRowGuard'
 
+    attr_reader :tables, :sql_variables
     def initialize
       @tables = []
       @sql_replacement = TABLE_CALLBACK
@@ -47,10 +48,5 @@ module MysqlRowGuard
     def name
       NAME
     end
-
-    private
-
-    attr_reader :tables
-
   end
 end
