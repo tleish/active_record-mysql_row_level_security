@@ -135,5 +135,42 @@ describe MysqlRowGuard::SqlStringParser do
       tree = parser.parse_with_debug(input)
       assert_equal [{:command=>"SELECT "}, {:string=>"'disappearing\\ backslash'"}], tree
     end
+
+    it 'test' do
+      skip
+      input = "SELECT * FROM posts, post_comments WHERE type = 'comments'"
+      parser = MysqlRowGuard::SqlStringParser.new
+      tree = parser.parse_with_debug(input)
+      assert_equal([{:command=>"SELECT * FROM "}, {:table=>"posts"}, {:command=>" WHERE type = "}, {:string=>"'comments'"}], tree)
+    end
+
+    it 'test2' do
+      skip
+      input = "posts"
+      parser = MysqlRowGuard::SqlStringParser.new.table
+      tree = parser.parse_with_debug(input)
+      assert_equal([{:command=>"SELECT * FROM "}, {:table=>"posts"}, {:command=>" WHERE type = "}, {:string=>"'comments'"}], tree)
+    end
+
+    it 'has a benchmark' do
+      require 'benchmark'
+
+      sql = "SELECT * FROM posts, post_comments WHERE type = 'comments'"
+      parser = MysqlRowGuard::SqlStringParser.new
+
+      n = 10_000
+
+      Benchmark.bm(7) do |x|
+        x.report("for:") do
+          for i in 1..n;
+            ast = parser.parse(sql)
+            # transformer.apply(ast).join
+          end
+        end
+        # x.report("times:") { n.times do   ; a = "1"; end }
+        # x.report("upto:")  { 1.upto(n) do ; a = "1"; end }
+      end
+
+    end
   end
 end

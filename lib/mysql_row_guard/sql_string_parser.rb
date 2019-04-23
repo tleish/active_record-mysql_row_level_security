@@ -5,15 +5,21 @@ module MysqlRowGuard
   class SqlStringParser < Parslet::Parser
     rule(:double_string) {
       str('"') >> (
-      str('\\') >> any | str('""') >> any | str('"').absent? >> any
+        str('\\') >> any | str('""') >> any | str('"').absent? >> any
       ).repeat >> str('"')
     }
 
     rule(:single_string) {
       str("'") >> (
-      str('\\') >> any | str("''") >> any | str("'").absent? >> any
+        str('\\') >> any | str("''") >> any | str("'").absent? >> any
       ).repeat >> str("'")
     }
+
+    # rule(:table) { string.absent? >> (str('posts') | str('comments')).as(:table) }
+    rule(:word) { match('[a-zA-Z_]').repeat }
+    # rule(:table) { ((word.absent? >> any) >> (str('posts') | str('comments')).as(:table) >> word.absent? >> any) }
+    # rule(:table) { ((word.absent? >> any).repeat >> (str('posts') | str('comments')).as(:table)) >> (word.absent? >> any) }
+    rule(:table) { ((word.absent? >> any).repeat >> (str('posts') | str('comments'))).as(:table) }
 
     rule(:string) { (double_string | single_string).as(:string) }
 

@@ -3,13 +3,8 @@ require 'mysql_row_guard/sql_string_parser'
 module MysqlRowGuard
   class SqlFortifier
     def self.for(sql:, active_record: nil, configuration: MysqlRowGuard.configuration)
-      yield(active_record) if active_record && block_given?
-
       # Only fortify once
-      return sql if sql.respond_to?(:mysql_row_guard_cached?)
-
-      # Only fortify once
-      return sql if sql.respond_to?(:mysql_row_guard_cached?)
+      return sql if SqlFingerPrinter.stamped?(sql)
 
       # Don't use views for 'SHOW' commands since Table Views do not have primary keys
       # these commands are used by rails to get table definitions and primary keys for it's logic
@@ -24,7 +19,11 @@ module MysqlRowGuard
                 else
                   new(sql: sql, configuration: configuration).sql
                 end
-      new_sql.extend(MysqlRowGuard::SqlFortifier::Cached)
+
+      SqlFingerPrinter.new(original_sql: sql, new_sql: new_sql, finger_print: configuration.init_command).sql do
+        # optimization to only yield active directory command if query has changed
+        yield(active_record) if active_record && block_given?
+      end
     end
 
     attr_reader :original_sql, :configuration, :transformer
@@ -35,18 +34,7 @@ module MysqlRowGuard
     end
 
     def sql
-      @sql ||= SqlFingerPrinter.for(original_sql: original_sql, new_sql: new_sql, finger_print: configuration.init_command)
-    end
-
-    def new_sql
-      transformer.apply(original_sql)
-      # original_sql.gsub(configuration.sql_pattern, configuration.sql_replacement)
-    end
-
-    module Cached
-      def mysql_row_guard_cached?
-        self
-      end
+      @sql ||= transformer.apply(original_sql)
     end
   end
 
@@ -67,11 +55,37 @@ module MysqlRowGuard
   end
 
   class SqlFingerPrinter
-    def self.for(original_sql:, new_sql:, finger_print:)
-      if new_sql == original_sql
-        original_sql
-      else
+    attr_reader :original_sql, :new_sql, :finger_print
+    def initialize(original_sql:, new_sql:, finger_print:)
+      @original_sql = original_sql
+      @new_sql = new_sql
+      @finger_print = finger_print
+    end
+
+    def sql
+      yield if modified_sql? && block_given?
+      @sql ||= stamped_sql.extend(MysqlRowGuard::SqlFingerPrinter::Cached)
+    end
+
+    def modified_sql?
+      new_sql != original_sql
+    end
+
+    def stamped_sql
+      if modified_sql?
         "/* #{finger_print} */ #{new_sql}"
+      else
+        original_sql
+      end
+    end
+
+    def self.stamped?(sql)
+      sql.respond_to?(:mysql_row_guard_cached?)
+    end
+    
+    module Cached
+      def mysql_row_guard_cached?
+        self
       end
     end
   end
