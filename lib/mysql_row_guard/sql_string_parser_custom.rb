@@ -10,6 +10,7 @@ module MysqlRowGuard
 
     DOUBLE_QUOTE = '"'
     SINGLE_QUOTE = "'"
+    QUOTE = [DOUBLE_QUOTE, SINGLE_QUOTE]
     STRING_ESCAPE = '\\'
 
     def initialize(tables: {})
@@ -22,7 +23,7 @@ module MysqlRowGuard
     def parse(text)
       text.each_char do |char|
         case char
-        when DOUBLE_QUOTE, SINGLE_QUOTE
+        when *QUOTE
           if buffer.first == char # end_quote?
             escaped = @escape
             buffer_add(char)
@@ -60,22 +61,20 @@ module MysqlRowGuard
     end
 
     def flush_quote
-      if buffer.any?
-        @output << buffer.join
-        reset_buffer
-      end
+      return unless buffer.any?
+      @output << buffer.join
+      reset_buffer
     end
 
     def flush
-      if buffer.any? && !buffer_is_quote?
-        string = buffer.join
-        @output << (@tables[string.downcase] || string)
-        reset_buffer
-      end
+      return unless buffer.any? && !buffer_is_quote?
+      string = buffer.join
+      @output << (@tables[string.downcase] || string)
+      reset_buffer
     end
 
     def buffer_is_quote?
-      [SINGLE_QUOTE, DOUBLE_QUOTE].include?(buffer.first)
+      QUOTE.include?(buffer.first)
     end
 
     def reset_buffer
