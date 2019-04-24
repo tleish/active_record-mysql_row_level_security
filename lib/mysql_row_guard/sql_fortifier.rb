@@ -1,4 +1,4 @@
-require 'mysql_row_guard/sql_string_parser'
+require 'mysql_row_guard/sql_string_parser_custom'
 
 module MysqlRowGuard
   class SqlFortifier
@@ -30,27 +30,12 @@ module MysqlRowGuard
     def initialize(sql:, configuration: MysqlRowGuard.configuration)
       @original_sql = sql
       @configuration = configuration
-      @transformer = SqlStringParserTransformer.new(configuration: configuration)
+      # @transformer = SqlStringParserTransformer.new(configuration: configuration)
+      @transformer = SqlStringParserCustom.new(tables: configuration.tables_hash)
     end
 
     def sql
-      @sql ||= transformer.apply(original_sql)
-    end
-  end
-
-  class SqlStringParserTransformer
-    PARSER = SqlStringParser.new
-    attr_reader :parser, :transformer
-    def initialize(configuration: configuration)
-      @parser = PARSER
-      @transformer = SqlStringTransformer.for do |command|
-        command.to_s.gsub(configuration.sql_pattern, configuration.sql_replacement)
-      end
-    end
-
-    def apply(sql)
-      ast = parser.parse(sql)
-      transformer.apply(ast).join
+      @sql ||= transformer.parse(original_sql)
     end
   end
 

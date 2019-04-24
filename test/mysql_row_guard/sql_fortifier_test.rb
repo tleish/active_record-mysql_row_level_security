@@ -68,5 +68,43 @@ describe MysqlRowGuard::SqlFortifier do
     assert_equal cached_sql, already_cached_sql
   end
 
+  it 'has a benchmark' do
+    skip
+    require 'benchmark'
+
+    user = MysqlRowGuard::RowUserFake.new
+    user.current_master_org_id = 1
+    MysqlRowGuard.configure do |config|
+      config.tables = %w[comments]
+      config.sql_replacement = 'my_%{table}_view'
+      config.sql_variables = { my_var: 1 }
+    end
+
+    n = 10_000
+
+    # require 'ruby-prof-flamegraph'
+    # RubyProf.start
+
+    Benchmark.bm(7) do |x|
+      x.report("for:") do
+        n.times do
+          sql = 'SELECT * FROM posts WHERE type = "comments"'
+          sql_fortifier = MysqlRowGuard::SqlFortifier.for(sql: sql, configuration: MysqlRowGuard.configuration)
+          sql_fortifier.to_s
+        end
+      end
+    end
+
+    # result = RubyProf.stop
+    # printer = RubyProf::FlameGraphPrinter.new(result)
+    #
+    # dir = File.dirname(__FILE__)
+    # file = File.join(dir, "profile-#{Time.now.to_i}.data")
+    # File.open(file, 'w') {|file| printer.print(file)}
+    # flamegraph_processor = '~/Projects/src/github/FlameGraph/flamegraph.pl --countname=ms --width=1500'
+    # cmd = "cat #{File.basename(file)} | #{flamegraph_processor} > #{File.basename(file, '.*')}_flamegraph.svg"
+    # Dir.chdir(File.dirname(file)) { %x[#{cmd}] }
+  end
+
 
 end

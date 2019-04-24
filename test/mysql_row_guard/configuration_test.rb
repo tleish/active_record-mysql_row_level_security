@@ -46,6 +46,26 @@ describe MysqlRowGuard::Configuration do
     end
   end
 
+  describe '#tables_hash' do
+    it 'returns an empty hash with no configuration' do
+      configuration = MysqlRowGuard::Configuration.new
+      assert_equal({}, configuration.tables_hash)
+    end
+
+    it 'returns a table hash with' do
+      configuration = MysqlRowGuard::Configuration.new
+      configuration.tables = %w[posts comments]
+      assert_equal({'posts' => 'posts', 'comments' => 'comments'}, configuration.tables_hash)
+    end
+
+    it 'returns a table hash with custom pattern' do
+      configuration = MysqlRowGuard::Configuration.new
+      configuration.tables = %w[posts comments]
+      configuration.sql_replacement = 'user_%{table}_view'
+      assert_equal({'posts' => 'user_posts_view', 'comments' => 'user_comments_view'}, configuration.tables_hash)
+    end
+  end
+
   describe '#sql_replacement' do
     it 'returns a sql_replacement' do
       configuration = MysqlRowGuard::Configuration.new

@@ -1,11 +1,6 @@
 require 'test_helper'
 require 'mysql_row_guard/sql_string_parser_custom'
 
-class FooParser < Parslet::Parser
-  rule(:foo) { str('foo') }
-  root(:foo)
-end
-
 describe MysqlRowGuard::SqlStringParserCustom do
   let(:parser) { MysqlRowGuard::SqlStringParserCustom.new(tables: {'posts' => 'post_view', 'comments' => 'my_comments_view'}) }
 
@@ -149,45 +144,6 @@ describe MysqlRowGuard::SqlStringParserCustom do
     it 'full escaping of various types' do
       sql = %(SELECT * FROM comments WHERE posts_type IN ('hello', '"hello"', '""hello""', 'hel''lo', '\\'hello', 'posts" comments'))
       assert_equal %(SELECT * FROM my_comments_view WHERE posts_type IN ('hello', '"hello"', '""hello""', 'hel''lo', '\\'hello', 'posts" comments')), parser.parse(sql)
-    end
-  end
-
-  describe 'other' do
-
-    it 'has a benchmark' do
-      # skip
-      require 'benchmark'
-
-      sql = "SELECT * FROM posts, post_comments WHERE type = 'comments'"
-      TABLES = {'posts' => 'user_posts_view', 'comments' => 'user_comments_view'}
-
-      parser = MysqlRowGuard::SqlStringParserCustom.new(tables: TABLES)
-
-      n = 10_000
-      # n = 50
-
-      # require 'ruby-prof-flamegraph'
-      # RubyProf.start
-
-      Benchmark.bm(7) do |x|
-        x.report("parser:") do
-          n.times do
-            ast = parser.parse(sql)
-            # transformer.apply(ast).join
-          end
-        end
-      end
-
-      # result = RubyProf.stop
-      # printer = RubyProf::FlameGraphPrinter.new(result)
-      #
-      # dir = File.dirname(__FILE__)
-      # file = File.join(dir, "profile-#{Time.now.to_i}.data")
-      # File.open(file, 'w') {|file| printer.print(file)}
-      # flamegraph_processor = '~/Projects/src/github/FlameGraph/flamegraph.pl --countname=ms --width=1500'
-      # cmd = "cat #{File.basename(file)} | #{flamegraph_processor} > #{File.basename(file, '.*')}_flamegraph.svg"
-      # Dir.chdir(File.dirname(file)) { %x[#{cmd}] }
-
     end
   end
 end
