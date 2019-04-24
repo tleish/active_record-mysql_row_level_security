@@ -24,8 +24,9 @@ module MysqlRowGuard
         case char
         when DOUBLE_QUOTE, SINGLE_QUOTE
           if buffer.first == char # end_quote?
+            escaped = @escape
             buffer_add(char)
-            flush_quote unless @escape && [STRING_ESCAPE, char].include?(buffer[-2]) #escaped_quote?
+            flush_quote unless escaped
           elsif buffer_is_quote?
             buffer_add(char)
           else # start of quote
@@ -49,14 +50,17 @@ module MysqlRowGuard
     private
 
     def buffer_add(char)
-      @escape = (!@escape && [STRING_ESCAPE, DOUBLE_QUOTE, SINGLE_QUOTE].include?(char) && buffer_is_quote? && char == buffer.first)
+      if @escape
+        @escape = false
+      else
+        @escape = (buffer_is_quote? && [STRING_ESCAPE, buffer.first].include?(char))
+      end
       @previous = char
       @buffer << char
     end
 
     def flush_quote
       if buffer.any?
-        @escape = false
         @output << buffer.join
         reset_buffer
       end
@@ -75,6 +79,7 @@ module MysqlRowGuard
     end
 
     def reset_buffer
+      @escape = false
       @buffer = []
       @previous = ''
     end

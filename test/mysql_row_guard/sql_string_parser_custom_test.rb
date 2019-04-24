@@ -67,9 +67,24 @@ describe MysqlRowGuard::SqlStringParserCustom do
       assert_equal %(SELECT * FROM my_comments_view WHERE my_comments_view.posts_type = "posts' comments" AND my_comments_view.field = "comments"), parser.parse(sql)
     end
 
+    it 'handles escaped quote at beginning of string' do
+      sql = %(SELECT * FROM comments WHERE comments.posts_type = "\\"posts" AND comments.field = "comments")
+      assert_equal %(SELECT * FROM my_comments_view WHERE my_comments_view.posts_type = "\\"posts" AND my_comments_view.field = "comments"), parser.parse(sql)
+    end
+
+    it 'handles double quote escaped quote at beginning of string' do
+      sql = %(SELECT * FROM comments WHERE comments.posts_type = """posts" AND comments.field = "comments")
+      assert_equal %(SELECT * FROM my_comments_view WHERE my_comments_view.posts_type = """posts" AND my_comments_view.field = "comments"), parser.parse(sql)
+    end
+
     it 'handles escaped quote at end of string' do
       sql = %(SELECT * FROM comments WHERE comments.posts_type = "posts\\"" AND comments.field = "comments")
       assert_equal %(SELECT * FROM my_comments_view WHERE my_comments_view.posts_type = "posts\\"" AND my_comments_view.field = "comments"), parser.parse(sql)
+    end
+
+    it 'handles double quote escaped quote at end of string' do
+      sql = %(SELECT * FROM comments WHERE comments.posts_type = "posts""" AND comments.field = "comments")
+      assert_equal %(SELECT * FROM my_comments_view WHERE my_comments_view.posts_type = "posts""" AND my_comments_view.field = "comments"), parser.parse(sql)
     end
 
     # see: https://dev.mysql.com/doc/refman/5.7/en/string-literals.html
@@ -108,6 +123,26 @@ describe MysqlRowGuard::SqlStringParserCustom do
     it 'handles single quote' do
       sql = %(SELECT * FROM comments WHERE comments.posts_type = 'posts" comments' AND comments.field = 'comments')
       assert_equal %(SELECT * FROM my_comments_view WHERE my_comments_view.posts_type = 'posts" comments' AND my_comments_view.field = 'comments'), parser.parse(sql)
+    end
+
+    it 'handles escaped quote at beginning of string' do
+      sql = %(SELECT * FROM comments WHERE comments.posts_type = '\\'posts' AND comments.field = 'comments')
+      assert_equal %(SELECT * FROM my_comments_view WHERE my_comments_view.posts_type = '\\'posts' AND my_comments_view.field = 'comments'), parser.parse(sql)
+    end
+
+    it 'handles double quote escaped quote at beginning of string' do
+      sql = %(SELECT * FROM comments WHERE comments.posts_type = '''posts' AND comments.field = 'comments')
+      assert_equal %(SELECT * FROM my_comments_view WHERE my_comments_view.posts_type = '''posts' AND my_comments_view.field = 'comments'), parser.parse(sql)
+    end
+
+    it 'handles escaped quote at end of string' do
+      sql = %(SELECT * FROM comments WHERE comments.posts_type = 'posts\\'' AND comments.field = 'comments')
+      assert_equal %(SELECT * FROM my_comments_view WHERE my_comments_view.posts_type = 'posts\\'' AND my_comments_view.field = 'comments'), parser.parse(sql)
+    end
+
+    it 'handles double quote escaped quote at end of string' do
+      sql = %(SELECT * FROM comments WHERE comments.posts_type = 'posts''' AND comments.field = 'comments')
+      assert_equal %(SELECT * FROM my_comments_view WHERE my_comments_view.posts_type = 'posts''' AND my_comments_view.field = 'comments'), parser.parse(sql)
     end
 
     # see: https://dev.mysql.com/doc/refman/5.7/en/string-literals.html
