@@ -2,6 +2,7 @@ require 'mysql_row_guard/sql_string_parser'
 
 module MysqlRowGuard
   class SqlFortifier
+    IGNORE_COMMANDS = %w[SHOW]
     def self.for(sql:, active_record: nil, configuration: MysqlRowGuard.configuration)
       # Only fortify once
       return sql if SqlFingerPrinter.stamped?(sql)
@@ -14,7 +15,7 @@ module MysqlRowGuard
       # See: ActiveRecord::ConnectionAdapters::AbstractMysqlAdapter#create_table_info
       #
       # Don't parse if the init_command is empty
-      new_sql = if sql[0..3].upcase == 'SHOW' || configuration.init_command.empty?
+      new_sql = if IGNORE_COMMANDS.include?(sql[0..3].upcase) || configuration.init_command.empty?
                   sql
                 else
                   new(sql: sql, configuration: configuration).sql

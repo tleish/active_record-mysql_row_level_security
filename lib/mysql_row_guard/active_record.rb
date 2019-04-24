@@ -6,16 +6,20 @@ module MysqlRowGuard
     def to_sql(arel, binds = [])
       sql = super(arel, binds)
       return sql unless MysqlRowGuard.enabled?
-      MysqlRowGuard::SqlFortifier.for(sql: sql)
+      fortify(sql)
     end
 
     def execute(sql, name = nil)
       return super(sql, name) unless MysqlRowGuard.enabled?
+      super(fortify(sql), name)
+    end
+
+    def fortify(sql)
       configuration = MysqlRowGuard.configuration
       fortified_sql = MysqlRowGuard::SqlFortifier.for(sql: sql, active_record: self) do |active_record|
         active_record.ensure_mysql_row_guard_variables(configuration)
       end
-      super(fortified_sql, name)
+      fortified_sql
     end
 
     def ensure_mysql_row_guard_variables(configuration)

@@ -10,23 +10,22 @@ module MysqlRowGuard
     attr_reader :enabled
     attr_writer :configuration
   end
-  
+
+  @configuration = Configuration.new
   def self.configuration
-    return @configuration if @configuration
     MysqlRowGuard.disable do
-      @configuration = Configuration.new
       @configuration_callback.call(@configuration) if @configuration_callback.is_a? Proc
       @configuration
     end
   end
 
   def self.configure(&block)
-    reset_configuration
+    # reset_configuration
     @configuration_callback = block
   end
 
   def self.reset_configuration
-    @configuration = nil
+    @configuration = Configuration.new
   end
 
   @enabled = true
