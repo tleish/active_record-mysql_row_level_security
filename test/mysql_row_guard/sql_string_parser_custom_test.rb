@@ -153,26 +153,6 @@ describe MysqlRowGuard::SqlStringParserCustom do
   end
 
   describe 'other' do
-    # it 'considers backticks as commands' do
-    #   input = 'SELECT * FROM `subscribers`'
-    #   parser = MysqlRowGuard::SqlStringParser.new
-    #   tree = parser.parse_with_debug(input)
-    #   assert_equal [{:command=>'SELECT * FROM `subscribers`'}], tree
-    # end
-    #
-    # it 'handles multi-line' do
-    #   input = "SELECT * FROM subscribers \n WHERE name = 'test'"
-    #   parser = MysqlRowGuard::SqlStringParser.new
-    #   tree = parser.parse_with_debug(input)
-    #   assert_equal [{:command=>"SELECT * FROM subscribers \n WHERE name = "}, {:string=>"'test'"}], tree
-    # end
-    #
-    # it 'handles disappearing backslash' do
-    #   input = "SELECT 'disappearing\\ backslash'"
-    #   parser = MysqlRowGuard::SqlStringParser.new
-    #   tree = parser.parse_with_debug(input)
-    #   assert_equal [{:command=>"SELECT "}, {:string=>"'disappearing\\ backslash'"}], tree
-    # end
 
     it 'has a benchmark' do
       # skip
@@ -180,24 +160,8 @@ describe MysqlRowGuard::SqlStringParserCustom do
 
       sql = "SELECT * FROM posts, post_comments WHERE type = 'comments'"
       TABLES = {'posts' => 'user_posts_view', 'comments' => 'user_comments_view'}
-      # parser = MysqlRowGuard::SqlStringParserCustom.new do |command|
-      #   TABLES[command.downcase] || command
-      # end
 
       parser = MysqlRowGuard::SqlStringParserCustom.new(tables: TABLES)
-      
-      # transformer = MysqlRowGuard::SqlStringTransformerCustom.new do |command|
-      #   command.gsub!(/\b(?<table>posts|comments)\b/i, 'user_\k<table>_view')
-      # end
-      #
-      # transformer = MysqlRowGuard::SqlStringTransformerCustom.new do |command|
-      #   command.sub('posts', 'user_posts_view')
-      # end
-
-      # tables = {'posts' => 'user_posts_view', 'comments' => 'user_comments_view'}
-      # transformer = MysqlRowGuard::SqlStringTransformerCustom.new do |command|
-      #   tables[command.downcase] || command
-      # end
 
       n = 10_000
       # n = 50
