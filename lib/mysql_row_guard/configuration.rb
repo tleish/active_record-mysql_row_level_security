@@ -1,6 +1,18 @@
 require 'ostruct'
 
 module MysqlRowGuard
+  module SqlVariablesHashRefinement
+    refine Hash do
+      def to_sql
+        self.to_s.gsub(':', '@').gsub('=>', ' := ').gsub(/[{}]/, '')
+      end
+    end
+  end
+end
+
+using MysqlRowGuard::SqlVariablesHashRefinement
+
+module MysqlRowGuard
   class Configuration
     TABLE_CALLBACK = '\k<table>'
     NAME = 'MysqlRowGuard'
@@ -12,13 +24,15 @@ module MysqlRowGuard
       @sql_variables = {}
     end
 
-    def init_command
-      return '' if @sql_variables.empty?
-      @init_command ||= "SET #{build_variables}"
+    def reset_cache
+      @pattern = nil
+      @tables_hash = nil
+      @init_command = nil
     end
 
-    def build_variables
-      @sql_variables.to_s.gsub(':', '@').gsub('=>', ' := ').gsub(/[{}]/, '')
+    def init_command
+      return '' if @sql_variables.empty?
+      @init_command ||= "SET #{@sql_variables.to_sql}"
     end
 
     def sql_pattern
@@ -27,9 +41,8 @@ module MysqlRowGuard
     end
 
     def tables=(names)
-      raise 'sql_variables must be an array of table names' unless names.is_a? Array
-      @pattern = nil # reset sql pattern
-      @tables_hash = nil # reset tables_hash
+      raise 'tables must be an array of table names' unless names.is_a? Array
+      reset_cache
       @tables = names
     end
 
@@ -41,14 +54,14 @@ module MysqlRowGuard
 
     def sql_variables=(hash)
       raise 'sql_variables must be a hash' unless hash.is_a? Hash
-      @tables_hash = nil # reset tables_hash
+      reset_cache
       @sql_variables = hash
     end
 
     def sql_replacement=(string)
       string = '%{table}' if String(string).empty?
       raise 'sql_replacement string must include "%{table}"' unless String(string).include?('%{table}')
-      @tables_hash = nil # reset tables_hash
+      reset_cache
       @sql_replacement = string % { table: TABLE_CALLBACK }
     end
 
