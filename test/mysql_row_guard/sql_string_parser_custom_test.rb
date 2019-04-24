@@ -7,121 +7,110 @@ class FooParser < Parslet::Parser
 end
 
 describe MysqlRowGuard::SqlStringParserCustom do
-  let(:parser) { MysqlRowGuard::SqlStringParserCustom.new }
+  let(:parser) { MysqlRowGuard::SqlStringParserCustom.new(tables: {'posts' => 'post_view', 'comments' => 'my_comments_view'}) }
 
-  describe 'double quotes' do
-    it 'seperates out double quotes' do
-      input = 'first_name = "first_name" last_name = "last_name\'s"'
-      tree = parser.parse(input)
-
-      transformer = MysqlRowGuard::SqlStringTransformerCustom.new do |command|
-        command.to_s.gsub(/\b(?<table>posts|comments)\b/i, 'user_\k<table>_view')
-      end
-      puts transformer.apply(tree).join
-      assert_equal ["first_name", " ", "=", " ", "\"first_name\"", " ", "last_name", " ", "=", " ", "\"last_name's\""], tree
+  describe 'table replacement' do
+    it 'renames a specified table' do
+      sql = 'SELECT * FROM comments'
+      assert_equal 'SELECT * FROM my_comments_view', parser.parse(sql)
     end
 
-    # it 'standard' do
-    #   input = 'SELECT * FROM subscribers WHERE name = "name"'
-    #   tree = parser.parse(input)
-    #   assert_equal [{:command=>'SELECT * FROM subscribers WHERE name = '}, {:string=>'"name"'}], tree
-    # end
+    it 'renames a specified table in both SELECT, FROM and WHERE clause' do
+      sql = 'SELECT posts.id, posts.name FROM posts WHERE posts.id = 123'
+      assert_equal 'SELECT post_view.id, post_view.name FROM post_view WHERE post_view.id = 123', parser.parse(sql)
+    end
 
-    # it 'matches with backlash escaped strings' do
-    #   input = 'SELECT * FROM subscribers WHERE name = "na \" me"'
-    #   parser = MysqlRowGuard::SqlStringParser.new
-    #   tree = parser.parse_with_debug(input)
-    #   assert_equal [{:command=>'SELECT * FROM subscribers WHERE name = '}, {:string=>'"na \" me"'}], tree
-    # end
-    #
-    # it 'matches with double escaped strings' do
-    #   input = 'SELECT * FROM subscribers WHERE name = "na "" me"'
-    #   parser = MysqlRowGuard::SqlStringParser.new
-    #   tree = parser.parse_with_debug(input)
-    #   assert_equal [{:command=>'SELECT * FROM subscribers WHERE name = '}, {:string=>'"na "" me"'}], tree
-    # end
-    #
-    # it 'matches with backslash and double escaped strings' do
-    #   input = 'SELECT * FROM subscribers WHERE name = "na \" "" me"'
-    #   parser = MysqlRowGuard::SqlStringParser.new
-    #   tree = parser.parse_with_debug(input)
-    #   assert_equal [{:command=>'SELECT * FROM subscribers WHERE name = '}, {:string=>'"na \" "" me"'}], tree
-    # end
-    #
-    # it 'matches with more than one string' do
-    #   input = 'SELECT * FROM subscribers WHERE id = 2 name = "name" and age = "young"'
-    #   parser = MysqlRowGuard::SqlStringParser.new
-    #   tree = parser.parse_with_debug(input)
-    #   assert_equal [{:command=>'SELECT * FROM subscribers WHERE id = 2 name = '}, {:string=>'"name"'}, {:command=>" and age = "}, {:string=>'"young"'}], tree
-    # end
-    #
-    # it 'handles single quote inside' do
-    #   input = 'SELECT * FROM subscribers WHERE id = 2 name = "name\'s"'
-    #   parser = MysqlRowGuard::SqlStringParser.new
-    #   tree = parser.parse_with_debug(input)
-    #   assert_equal [{:command=>'SELECT * FROM subscribers WHERE id = 2 name = '}, {:string=>'"name\'s"'}], tree
-    # end
-    #
-    # # see: https://dev.mysql.com/doc/refman/5.7/en/string-literals.html
-    # it 'full escaping' do
-    #   input = %(SELECT "hello", "'hello'", "''hello''", "hel""lo", "\\"hello")
-    #   parser = MysqlRowGuard::SqlStringParser.new
-    #   tree = parser.parse_with_debug(input)
-    #   assert_equal [{:command=>"SELECT "}, {:string=>"\"hello\""}, {:command=>", "}, {:string=>"\"'hello'\""}, {:command=>", "}, {:string=>"\"''hello''\""}, {:command=>", "}, {:string=>"\"hel\"\"lo\""}, {:command=>", "}, {:string=>"\"\\\"hello\""}], tree
-    # end
+    it 'renames multiple tables' do
+      sql = 'SELECT * FROM comments, posts'
+      assert_equal 'SELECT * FROM my_comments_view, post_view', parser.parse(sql)
+    end
+
+    it 'renames multiple tables' do
+      sql = 'SELECT posts.id, posts.name, comments.content FROM posts JOIN comments ON comments.post_id = posts.id WHERE posts.id = 123'
+      assert_equal 'SELECT post_view.id, post_view.name, my_comments_view.content FROM post_view JOIN my_comments_view ON my_comments_view.post_id = post_view.id WHERE post_view.id = 123', parser.parse(sql)
+    end
+
+    it 'renames multiple tables' do
+      sql = 'SELECT posts.id, posts.name, comments.content FROM posts JOIN comments ON comments.post_id = posts.id WHERE posts.id = 123'
+      assert_equal 'SELECT post_view.id, post_view.name, my_comments_view.content FROM post_view JOIN my_comments_view ON my_comments_view.post_id = post_view.id WHERE post_view.id = 123', parser.parse(sql)
+    end
   end
 
-  # describe 'single quotes' do
-  #   it 'standard' do
-  #     input = "SELECT * FROM subscribers WHERE name = 'name'"
-  #     parser = MysqlRowGuard::SqlStringParser.new
-  #     tree = parser.parse_with_debug(input)
-  #     assert_equal [{:command=>'SELECT * FROM subscribers WHERE name = '}, {:string=>"'name'"}], tree
-  #   end
-  #
-  #   it 'matches with backlash escaped strings' do
-  #     input = "SELECT * FROM subscribers WHERE name = 'na \\' me'"
-  #     parser = MysqlRowGuard::SqlStringParser.new
-  #     tree = parser.parse_with_debug(input)
-  #     assert_equal [{:command=>'SELECT * FROM subscribers WHERE name = '}, {:string=>"'na \\' me'"}], tree
-  #   end
-  #
-  #   it 'matches with double escaped strings' do
-  #     input = "SELECT * FROM subscribers WHERE name = 'na '' me'"
-  #     parser = MysqlRowGuard::SqlStringParser.new
-  #     tree = parser.parse_with_debug(input)
-  #     assert_equal [{:command=>'SELECT * FROM subscribers WHERE name = '}, {:string=>"'na '' me'"}], tree
-  #   end
-  #
-  #   it 'matches with backslash and double escaped strings' do
-  #     input = "SELECT * FROM subscribers WHERE name = 'na \\' '' me'"
-  #     parser = MysqlRowGuard::SqlStringParser.new
-  #     tree = parser.parse_with_debug(input)
-  #     assert_equal [{:command=>'SELECT * FROM subscribers WHERE name = '}, {:string=>"'na \\' '' me'"}], tree
-  #   end
-  #
-  #   it 'matches with more than one string' do
-  #     input = "SELECT * FROM subscribers WHERE id = 2 name = 'name' and age = 'young'"
-  #     parser = MysqlRowGuard::SqlStringParser.new
-  #     tree = parser.parse_with_debug(input)
-  #     assert_equal [{:command=>'SELECT * FROM subscribers WHERE id = 2 name = '}, {:string=>"'name'"}, {:command=>" and age = "}, {:string=>"'young'"}], tree
-  #   end
-  #
-  #   it 'handles double quote inside' do
-  #     input = "SELECT * FROM subscribers WHERE id = 2 name = 'name\"s'"
-  #     parser = MysqlRowGuard::SqlStringParser.new
-  #     tree = parser.parse_with_debug(input)
-  #     assert_equal [{:command=>'SELECT * FROM subscribers WHERE id = 2 name = '}, {:string=>"'name\"s'"}], tree
-  #   end
-  #
-  #   # see: https://dev.mysql.com/doc/refman/5.7/en/string-literals.html
-  #   it 'full escaping' do
-  #     input = %(SELECT 'hello', '"hello"', '""hello""', 'hel''lo', '\\'hello')
-  #     parser = MysqlRowGuard::SqlStringParser.new
-  #     tree = parser.parse_with_debug(input)
-  #     assert_equal [{:command=>"SELECT "}, {:string=>"'hello'"}, {:command=>", "}, {:string=>"'\"hello\"'"}, {:command=>", "}, {:string=>"'\"\"hello\"\"'"}, {:command=>", "}, {:string=>"'hel''lo'"}, {:command=>", "}, {:string=>"'\\'hello'"}], tree
-  #   end
-  # end
+  describe 'ignores table names in double quotes' do
+    it 'standard' do
+      sql = 'SELECT * FROM comments WHERE comments.posts_type = "posts"'
+      assert_equal 'SELECT * FROM my_comments_view WHERE posts_type = "posts"', parser.parse(sql)
+    end
+
+    it 'matches with backlash escaped strings' do
+      sql = 'SELECT * FROM comments WHERE posts_type = "posts na \" me"'
+      assert_equal 'SELECT * FROM my_comments_view WHERE posts_type = "posts na \" me"', parser.parse(sql)
+    end
+
+    it 'matches with double escaped strings' do
+      sql = 'SELECT * FROM comments WHERE posts_type = "posts na "" me"'
+      assert_equal 'SELECT * FROM my_comments_view WHERE posts_type = "posts na "" me"', parser.parse(sql)
+    end
+
+    it 'matches with backslash and double escaped strings' do
+      sql = 'SELECT * FROM comments WHERE posts_type = "posts na \" "" me"'
+      assert_equal 'SELECT * FROM my_comments_view WHERE posts_type = "posts na \" "" me"', parser.parse(sql)
+    end
+
+    it 'matches with more than one string' do
+      sql = 'SELECT * FROM comments WHERE posts_type = "posts" AND field = "comments"'
+      assert_equal 'SELECT * FROM my_comments_view WHERE posts_type = "posts" AND field = "comments"', parser.parse(sql)
+    end
+
+    it 'handles apostrophe' do
+      sql = %(SELECT * FROM comments WHERE posts_type = "posts' comments")
+      assert_equal %(SELECT * FROM my_comments_view WHERE posts_type = "posts' comments"), parser.parse(sql)
+    end
+
+    # see: https://dev.mysql.com/doc/refman/5.7/en/string-literals.html
+    it 'full escaping of various types' do
+      sql = %(SELECT * FROM comments WHERE posts_type IN ("posts", "'posts'", "''posts''", "posts""comments", "\\"posts", "posts' comments"))
+      assert_equal %(SELECT * FROM my_comments_view WHERE posts_type IN ("posts", "'posts'", "''posts''", "posts""comments", "\\"posts", "posts' comments")), parser.parse(sql)
+    end
+  end
+
+  describe 'ignores table names in single quotes' do
+    it 'standard' do
+      sql = "SELECT * FROM comments WHERE posts_type = 'posts'"
+      assert_equal "SELECT * FROM my_comments_view WHERE posts_type = 'posts'", parser.parse(sql)
+    end
+
+    it 'matches with backlash escaped strings' do
+      sql = %(SELECT * FROM comments WHERE posts_type = 'posts na \\' me')
+      assert_equal %(SELECT * FROM my_comments_view WHERE posts_type = 'posts na \\' me'), parser.parse(sql)
+    end
+
+    it 'matches with double escaped strings' do
+      sql = %(SELECT * FROM comments WHERE posts_type = 'posts na '' me')
+      assert_equal %(SELECT * FROM my_comments_view WHERE posts_type = 'posts na '' me'), parser.parse(sql)
+    end
+
+    it 'matches with backslash and double escaped strings' do
+      sql = %(SELECT * FROM comments WHERE posts_type = 'posts na \\' ' me')
+      assert_equal  %(SELECT * FROM my_comments_view WHERE posts_type = 'posts na \\' ' me'), parser.parse(sql)
+    end
+
+    it 'matches with more than one string' do
+      sql = "SELECT * FROM comments WHERE posts_type = 'posts' AND field = 'comments'"
+      assert_equal "SELECT * FROM my_comments_view WHERE posts_type = 'posts' AND field = 'comments'", parser.parse(sql)
+    end
+
+    it 'handles single quote' do
+      sql = %(SELECT * FROM comments WHERE posts_type = 'posts" comments')
+      assert_equal %(SELECT * FROM my_comments_view WHERE posts_type = 'posts" comments'), parser.parse(sql)
+    end
+
+    # see: https://dev.mysql.com/doc/refman/5.7/en/string-literals.html
+    it 'full escaping of various types' do
+      sql = %(SELECT * FROM comments WHERE posts_type IN ('hello', '"hello"', '""hello""', 'hel''lo', '\\'hello', 'posts" comments'))
+      assert_equal %(SELECT * FROM my_comments_view WHERE posts_type IN ('hello', '"hello"', '""hello""', 'hel''lo', '\\'hello', 'posts" comments')), parser.parse(sql)
+    end
+  end
 
   describe 'other' do
     # it 'considers backticks as commands' do
@@ -146,11 +135,17 @@ describe MysqlRowGuard::SqlStringParserCustom do
     # end
 
     it 'has a benchmark' do
+      # skip
       require 'benchmark'
 
       sql = "SELECT * FROM posts, post_comments WHERE type = 'comments'"
-      parser = MysqlRowGuard::SqlStringParserCustom.new
+      TABLES = {'posts' => 'user_posts_view', 'comments' => 'user_comments_view'}
+      # parser = MysqlRowGuard::SqlStringParserCustom.new do |command|
+      #   TABLES[command.downcase] || command
+      # end
 
+      parser = MysqlRowGuard::SqlStringParserCustom.new(tables: TABLES)
+      
       # transformer = MysqlRowGuard::SqlStringTransformerCustom.new do |command|
       #   command.gsub!(/\b(?<table>posts|comments)\b/i, 'user_\k<table>_view')
       # end
@@ -159,13 +154,13 @@ describe MysqlRowGuard::SqlStringParserCustom do
       #   command.sub('posts', 'user_posts_view')
       # end
 
-      tables = {'posts' => 'user_posts_view', 'comments' => 'user_comments_view'}
-      transformer = MysqlRowGuard::SqlStringTransformerCustom.new do |command|
-        tables[command.downcase] || command
-      end
+      # tables = {'posts' => 'user_posts_view', 'comments' => 'user_comments_view'}
+      # transformer = MysqlRowGuard::SqlStringTransformerCustom.new do |command|
+      #   tables[command.downcase] || command
+      # end
 
       n = 10_000
-      n = 1000
+      # n = 50
 
       # require 'ruby-prof-flamegraph'
       # RubyProf.start
