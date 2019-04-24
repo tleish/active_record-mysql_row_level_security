@@ -38,71 +38,76 @@ describe MysqlRowGuard::SqlStringParserCustom do
 
   describe 'ignores table names in double quotes' do
     it 'standard' do
-      sql = 'SELECT * FROM comments WHERE comments.posts_type = "posts"'
-      assert_equal 'SELECT * FROM my_comments_view WHERE posts_type = "posts"', parser.parse(sql)
+      sql = 'SELECT * FROM comments WHERE comments.posts_type = "posts" AND comments.field = "comments"'
+      assert_equal 'SELECT * FROM my_comments_view WHERE my_comments_view.posts_type = "posts" AND my_comments_view.field = "comments"', parser.parse(sql)
     end
 
     it 'matches with backlash escaped strings' do
-      sql = 'SELECT * FROM comments WHERE posts_type = "posts na \" me"'
-      assert_equal 'SELECT * FROM my_comments_view WHERE posts_type = "posts na \" me"', parser.parse(sql)
+      sql = 'SELECT * FROM comments WHERE comments.posts_type = "posts na \" me" AND comments.field = "comments"'
+      assert_equal 'SELECT * FROM my_comments_view WHERE my_comments_view.posts_type = "posts na \" me" AND my_comments_view.field = "comments"', parser.parse(sql)
     end
 
     it 'matches with double escaped strings' do
-      sql = 'SELECT * FROM comments WHERE posts_type = "posts na "" me"'
-      assert_equal 'SELECT * FROM my_comments_view WHERE posts_type = "posts na "" me"', parser.parse(sql)
+      sql = 'SELECT * FROM comments WHERE comments.posts_type = "posts na "" me" AND comments.field = "comments"'
+      assert_equal 'SELECT * FROM my_comments_view WHERE my_comments_view.posts_type = "posts na "" me" AND my_comments_view.field = "comments"', parser.parse(sql)
     end
 
-    it 'matches with backslash and double escaped strings' do
-      sql = 'SELECT * FROM comments WHERE posts_type = "posts na \" "" me"'
-      assert_equal 'SELECT * FROM my_comments_view WHERE posts_type = "posts na \" "" me"', parser.parse(sql)
+    it 'matches with backslash and double quote escaped strings' do
+      sql = 'SELECT * FROM comments WHERE comments.posts_type = "posts na \" "" me" AND comments.field = "comments"'
+      assert_equal 'SELECT * FROM my_comments_view WHERE my_comments_view.posts_type = "posts na \" "" me" AND my_comments_view.field = "comments"', parser.parse(sql)
     end
 
     it 'matches with more than one string' do
-      sql = 'SELECT * FROM comments WHERE posts_type = "posts" AND field = "comments"'
-      assert_equal 'SELECT * FROM my_comments_view WHERE posts_type = "posts" AND field = "comments"', parser.parse(sql)
+      sql = 'SELECT * FROM comments WHERE comments.posts_type = "posts" AND comments.field = "comments"'
+      assert_equal 'SELECT * FROM my_comments_view WHERE my_comments_view.posts_type = "posts" AND my_comments_view.field = "comments"', parser.parse(sql)
     end
 
     it 'handles apostrophe' do
-      sql = %(SELECT * FROM comments WHERE posts_type = "posts' comments")
-      assert_equal %(SELECT * FROM my_comments_view WHERE posts_type = "posts' comments"), parser.parse(sql)
+      sql = %(SELECT * FROM comments WHERE comments.posts_type = "posts' comments" AND comments.field = "comments")
+      assert_equal %(SELECT * FROM my_comments_view WHERE my_comments_view.posts_type = "posts' comments" AND my_comments_view.field = "comments"), parser.parse(sql)
+    end
+
+    it 'handles escaped quote at end of string' do
+      sql = %(SELECT * FROM comments WHERE comments.posts_type = "posts\\"" AND comments.field = "comments")
+      assert_equal %(SELECT * FROM my_comments_view WHERE my_comments_view.posts_type = "posts\\"" AND my_comments_view.field = "comments"), parser.parse(sql)
     end
 
     # see: https://dev.mysql.com/doc/refman/5.7/en/string-literals.html
     it 'full escaping of various types' do
-      sql = %(SELECT * FROM comments WHERE posts_type IN ("posts", "'posts'", "''posts''", "posts""comments", "\\"posts", "posts' comments"))
-      assert_equal %(SELECT * FROM my_comments_view WHERE posts_type IN ("posts", "'posts'", "''posts''", "posts""comments", "\\"posts", "posts' comments")), parser.parse(sql)
+      sql = %(SELECT * FROM comments WHERE comments.posts_type IN ("posts", "'posts'", "''posts''", "posts""comments", "\\"posts", "posts' comments"))
+      assert_equal %(SELECT * FROM my_comments_view WHERE my_comments_view.posts_type IN ("posts", "'posts'", "''posts''", "posts""comments", "\\"posts", "posts' comments")), parser.parse(sql)
     end
   end
 
   describe 'ignores table names in single quotes' do
     it 'standard' do
-      sql = "SELECT * FROM comments WHERE posts_type = 'posts'"
-      assert_equal "SELECT * FROM my_comments_view WHERE posts_type = 'posts'", parser.parse(sql)
+      sql = "SELECT * FROM comments WHERE comments.posts_type = 'posts' AND comments.field = 'comments'"
+      assert_equal "SELECT * FROM my_comments_view WHERE my_comments_view.posts_type = 'posts' AND my_comments_view.field = 'comments'", parser.parse(sql)
     end
 
     it 'matches with backlash escaped strings' do
-      sql = %(SELECT * FROM comments WHERE posts_type = 'posts na \\' me')
-      assert_equal %(SELECT * FROM my_comments_view WHERE posts_type = 'posts na \\' me'), parser.parse(sql)
+      sql = %(SELECT * FROM comments WHERE comments.posts_type = 'posts na \\' me' AND comments.field = 'comments')
+      assert_equal %(SELECT * FROM my_comments_view WHERE my_comments_view.posts_type = 'posts na \\' me' AND my_comments_view.field = 'comments'), parser.parse(sql)
     end
 
     it 'matches with double escaped strings' do
-      sql = %(SELECT * FROM comments WHERE posts_type = 'posts na '' me')
-      assert_equal %(SELECT * FROM my_comments_view WHERE posts_type = 'posts na '' me'), parser.parse(sql)
+      sql = %(SELECT * FROM comments WHERE comments.posts_type = 'posts na '' me' AND comments.field = 'comments')
+      assert_equal %(SELECT * FROM my_comments_view WHERE my_comments_view.posts_type = 'posts na '' me' AND my_comments_view.field = 'comments'), parser.parse(sql)
     end
 
-    it 'matches with backslash and double escaped strings' do
-      sql = %(SELECT * FROM comments WHERE posts_type = 'posts na \\' ' me')
-      assert_equal  %(SELECT * FROM my_comments_view WHERE posts_type = 'posts na \\' ' me'), parser.parse(sql)
+    it 'matches with backslash and double quote escaped strings' do
+      sql = %(SELECT * FROM comments WHERE comments.posts_type = 'posts na \\' '' me' AND comments.field = 'comments')
+      assert_equal  %(SELECT * FROM my_comments_view WHERE my_comments_view.posts_type = 'posts na \\' '' me' AND my_comments_view.field = 'comments'), parser.parse(sql)
     end
 
     it 'matches with more than one string' do
-      sql = "SELECT * FROM comments WHERE posts_type = 'posts' AND field = 'comments'"
-      assert_equal "SELECT * FROM my_comments_view WHERE posts_type = 'posts' AND field = 'comments'", parser.parse(sql)
+      sql = "SELECT * FROM comments WHERE comments.posts_type = 'posts' AND comments.field = 'comments'"
+      assert_equal "SELECT * FROM my_comments_view WHERE my_comments_view.posts_type = 'posts' AND my_comments_view.field = 'comments'", parser.parse(sql)
     end
 
     it 'handles single quote' do
-      sql = %(SELECT * FROM comments WHERE posts_type = 'posts" comments')
-      assert_equal %(SELECT * FROM my_comments_view WHERE posts_type = 'posts" comments'), parser.parse(sql)
+      sql = %(SELECT * FROM comments WHERE comments.posts_type = 'posts" comments' AND comments.field = 'comments')
+      assert_equal %(SELECT * FROM my_comments_view WHERE my_comments_view.posts_type = 'posts" comments' AND my_comments_view.field = 'comments'), parser.parse(sql)
     end
 
     # see: https://dev.mysql.com/doc/refman/5.7/en/string-literals.html

@@ -22,23 +22,13 @@ module MysqlRowGuard
     def parse(text)
       text.each_char do |char|
         case char
-        when DOUBLE_QUOTE
-          if buffer.first == DOUBLE_QUOTE # end_quote?
+        when DOUBLE_QUOTE, SINGLE_QUOTE
+          if buffer.first == char # end_quote?
             buffer_add(char)
-            flush_quote unless [STRING_ESCAPE, DOUBLE_QUOTE].include?(buffer[-2]) #escaped_quote?
-          elsif buffer.first == SINGLE_QUOTE
+            flush_quote unless @escape && [STRING_ESCAPE, char].include?(buffer[-2]) #escaped_quote?
+          elsif buffer_is_quote?
             buffer_add(char)
-          else
-            flush
-            buffer_add(char)
-          end
-        when SINGLE_QUOTE
-          if buffer.first == SINGLE_QUOTE # end_quote?
-            buffer_add(char)
-            flush_quote unless [STRING_ESCAPE, SINGLE_QUOTE].include?(buffer[-2]) #escaped_quote?
-          elsif buffer.first == DOUBLE_QUOTE
-            buffer_add(char)
-          else
+          else # start of quote
             flush
             buffer_add(char)
           end
@@ -59,12 +49,14 @@ module MysqlRowGuard
     private
 
     def buffer_add(char)
+      @escape = (!@escape && [STRING_ESCAPE, DOUBLE_QUOTE, SINGLE_QUOTE].include?(char) && buffer_is_quote? && char == buffer.first)
       @previous = char
       @buffer << char
     end
 
     def flush_quote
       if buffer.any?
+        @escape = false
         @output << buffer.join
         reset_buffer
       end
