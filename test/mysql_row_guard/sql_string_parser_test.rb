@@ -146,4 +146,17 @@ describe MysqlRowGuard::SqlStringParser do
       assert_equal %(SELECT * FROM my_comments_view WHERE posts_type IN ('hello', '"hello"', '""hello""', 'hel''lo', '\\'hello', 'posts" comments')), parser.parse(sql)
     end
   end
+
+  describe 'other' do
+    it 'handles sub-queries' do
+      sql = %(SELECT * FROM posts JOIN (SELECT * FROM comments WHERE comments.posts_type = 'posts''' AND comments.field = 'comments'))
+      assert_equal %(SELECT * FROM post_view JOIN (SELECT * FROM my_comments_view WHERE my_comments_view.posts_type = 'posts''' AND my_comments_view.field = 'comments')), parser.parse(sql)
+    end
+
+
+    it 'handles carriage returnes' do
+      sql = %(SELECT\n*\nFROM\ncomments\nWHERE comments.posts_type = 'posts''' AND comments.field = 'comments')
+      assert_equal %(SELECT\n*\nFROM\nmy_comments_view\nWHERE my_comments_view.posts_type = 'posts''' AND my_comments_view.field = 'comments'), parser.parse(sql)
+    end
+  end
 end
