@@ -1,4 +1,4 @@
-require 'mysql_row_guard/sql_string_parser_custom'
+require 'mysql_row_guard/sql_string_parser'
 
 module MysqlRowGuard
   class SqlFortifier

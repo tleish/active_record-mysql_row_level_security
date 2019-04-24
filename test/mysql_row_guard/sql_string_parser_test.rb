@@ -1,5 +1,5 @@
 require 'test_helper'
-require 'mysql_row_guard/sql_string_parser_custom'
+require 'mysql_row_guard/sql_string_parser'
 
 describe MysqlRowGuard::SqlStringParser do
   let(:parser) { MysqlRowGuard::SqlStringParser.new(tables: {'posts' => 'post_view', 'comments' => 'my_comments_view'}) }
