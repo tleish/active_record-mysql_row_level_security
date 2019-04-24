@@ -1,7 +1,7 @@
 require 'mysql_row_guard'
 
 module MysqlRowGuard
-  class SqlStringParserCustom
+  class SqlStringParser
     attr_reader :tables, :buffer, :output, :previous
     
     NON_WORD = /\W/

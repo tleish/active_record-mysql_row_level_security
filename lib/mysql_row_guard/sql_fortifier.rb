@@ -31,7 +31,7 @@ module MysqlRowGuard
       @original_sql = sql
       @configuration = configuration
       # @transformer = SqlStringParserTransformer.new(configuration: configuration)
-      @transformer = SqlStringParserCustom.new(tables: configuration.tables_hash)
+      @transformer = SqlStringParser.new(tables: configuration.tables_hash)
     end
 
     def sql
