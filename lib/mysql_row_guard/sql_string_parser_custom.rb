@@ -8,6 +8,10 @@ module MysqlRowGuard
     QUOTE = ['"', "'"]
     STRING_ESCAPE = '\\'
 
+    TYPE_QUOTE = 'QUOTE'
+    TYPE_NON_WORD = 'NON_WORD'
+    TYPE_WORD = 'WORD'
+
     def initialize(tables: {})
       @tables = tables
       @buffer = []
@@ -19,6 +23,7 @@ module MysqlRowGuard
       text.each_char do |char|
         case char
         when *QUOTE
+          @previous_type = TYPE_QUOTE
           if buffer.first == char # end_quote?
             escaped = @escape
             buffer_add(char)
@@ -30,10 +35,12 @@ module MysqlRowGuard
             buffer_add(char)
           end
         when NON_WORD
-          flush if previous !~ NON_WORD
+          flush unless @previous_type == TYPE_NON_WORD
+          @previous_type = TYPE_NON_WORD
           buffer_add(char)
         else
-          flush if previous =~ NON_WORD
+          flush unless @previous_type == TYPE_WORD
+          @previous_type = TYPE_WORD
           buffer_add(char)
         end
       end
