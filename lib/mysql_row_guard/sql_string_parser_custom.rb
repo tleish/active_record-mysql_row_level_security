@@ -1,16 +1,16 @@
 require 'mysql_row_guard'
-require 'parslet'
 
 module MysqlRowGuard
   class SqlStringParserCustom
     attr_reader :tables, :buffer, :output, :previous
+    
     NON_WORD = /\W/
     QUOTE = ['"', "'"]
     STRING_ESCAPE = '\\'
 
-    TYPE_QUOTE = 'QUOTE'
-    TYPE_NON_WORD = 'NON_WORD'
-    TYPE_WORD = 'WORD'
+    TYPE_QUOTE = :quote
+    TYPE_NON_WORD = :non_word
+    TYPE_WORD = :word
 
     def initialize(tables: {})
       @tables = tables
@@ -28,15 +28,13 @@ module MysqlRowGuard
             escaped = @escape
             buffer_add(char)
             flush_quote unless escaped
-          elsif buffer_quote?
-            buffer_add(char)
           else # start of quote
-            flush
+            flush unless quote?(buffer.first)
             buffer_add(char)
           end
         when NON_WORD
-          flush unless @previous_type == TYPE_NON_WORD
-          @previous_type = TYPE_NON_WORD
+          flush unless @previous_type == NON_WORD
+          @previous_type = NON_WORD
           buffer_add(char)
         else
           flush unless @previous_type == TYPE_WORD
@@ -53,13 +51,21 @@ module MysqlRowGuard
     private
 
     def buffer_add(char)
-      if @escape
-        @escape = false
-      else
-        @escape = ([STRING_ESCAPE, buffer.first].include?(char) && buffer_quote?)
-      end
+      record_escape(char)
       @previous = char
       @buffer << char
+    end
+
+    def record_escape(char)
+      if @escape
+        @escape = false
+      elsif char == STRING_ESCAPE
+        @escape = true
+      elsif quote?(char)
+        @escape = (char == buffer.first)
+      else
+        @escape = false
+      end
     end
 
     def flush_quote
@@ -69,18 +75,15 @@ module MysqlRowGuard
     end
 
     def flush
-      return unless buffer.any? && !buffer_quote?
+      buffer_first = buffer.first
+      return unless buffer_first && !quote?(buffer_first)
       string = buffer.join
       @output << (tables[string.downcase] || string)
       reset_buffer
     end
 
-    def buffer_quote?
-      QUOTE.include?(buffer.first)
-    end
-
-    def first
-      @first ||= buffer.first
+    def quote?(char)
+      QUOTE.include?(char)
     end
 
     def reset_buffer
