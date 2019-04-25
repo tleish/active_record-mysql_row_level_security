@@ -33,10 +33,10 @@ module MysqlRowGuard
     @enabled
   end
 
-  def self.disable
+  def self.disable(&block)
     @enabled = false
     begin
-      results = yield
+      results = block.call
     ensure # to always re-enable, regardless of the error
       @enabled = true
     end

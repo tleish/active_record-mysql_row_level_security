@@ -22,7 +22,7 @@ module MysqlRowGuard
       @tables = []
       @sql_replacement = DEFAULT_TABLE_CALLBACK
       @sql_variables = {}
-      @error_callback = Proc.new {}
+      @error_callback = Proc.new { |error| raise error }
     end
 
     def reset_cache

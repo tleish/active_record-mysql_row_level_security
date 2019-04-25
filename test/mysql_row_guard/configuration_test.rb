@@ -100,7 +100,10 @@ describe MysqlRowGuard::Configuration do
 
     it 'default callback does nothing' do
       configuration = MysqlRowGuard::Configuration.new
-      assert_nil configuration.error_callback.call('MyError')
+      exception = assert_raises RuntimeError do
+        configuration.error_callback.call('MyError')
+      end
+      assert_equal 'MyError', exception.message
     end
   end
 end
