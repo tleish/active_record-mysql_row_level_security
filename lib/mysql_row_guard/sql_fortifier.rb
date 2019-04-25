@@ -21,10 +21,12 @@ module MysqlRowGuard
                   new(sql: sql, configuration: configuration).sql
                 end
 
-      SqlFingerPrinter.new(original_sql: sql, new_sql: new_sql, finger_print: configuration.init_command).sql do
+      sql_finger_printed = SqlFingerPrinter.new(original_sql: sql, new_sql: new_sql, finger_print: configuration.init_command)
+      sql_finger_printed.modified? do
         # optimization to only yield active directory command if query has changed
         yield(active_record) if active_record && block_given?
       end
+      sql_finger_printed.sql
     end
 
     attr_reader :original_sql, :configuration, :transformer
@@ -49,17 +51,18 @@ module MysqlRowGuard
     end
 
     def sql
-      yield if modified_sql? && block_given?
       @sql ||= stamped_sql
     end
 
-    def modified_sql?
-      new_sql != original_sql
+    def modified?
+      modified = new_sql != original_sql
+      yield if modified && block_given?
+      modified
     end
 
     def stamped_sql
       local_original_sql = @original_sql
-      local_stamped_sql = if modified_sql?
+      local_stamped_sql = if modified?
                             "/* #{finger_print} */ #{new_sql}"
                           else
                             original_sql
