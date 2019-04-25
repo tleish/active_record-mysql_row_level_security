@@ -9,7 +9,7 @@ describe MysqlRowGuard::SqlFortifier do
   it 'returns sql without a view' do
     MysqlRowGuard.configure do |config|
       config.tables = %w[comments]
-      config.sql_replacement = ''
+      config.sql_replacement = '\k<table>'
     end
     sql_fortifier = MysqlRowGuard::SqlFortifier.for(sql: 'comments', configuration: MysqlRowGuard.configuration)
     assert_equal 'comments', sql_fortifier.to_s
@@ -20,7 +20,7 @@ describe MysqlRowGuard::SqlFortifier do
     user.current_master_org_id = 1
     MysqlRowGuard.configure do |config|
       config.tables = %w[comments]
-      config.sql_replacement = 'my_%{table}_view'
+      config.sql_replacement = 'my_\k<table>_view'
       config.sql_variables = { my_var: 1 }
     end
     sql_fortifier = MysqlRowGuard::SqlFortifier.for(sql: 'comments', configuration: MysqlRowGuard.configuration)
@@ -32,7 +32,7 @@ describe MysqlRowGuard::SqlFortifier do
     user.current_master_org_id = 1
     MysqlRowGuard.configure do |config|
       config.tables = %w[comments]
-      config.sql_replacement = 'my_%{table}_view'
+      config.sql_replacement = 'my_\k<table>_view'
       config.sql_variables = { my_var: 1 }
     end
     sql_fortifier = MysqlRowGuard::SqlFortifier.for(sql: 'SHOW comments', configuration: MysqlRowGuard.configuration)
@@ -44,7 +44,7 @@ describe MysqlRowGuard::SqlFortifier do
     user.current_master_org_id = 1
     MysqlRowGuard.configure do |config|
       config.tables = %w[posts comments]
-      config.sql_replacement = 'my_%{table}_view'
+      config.sql_replacement = 'my_\k<table>_view'
       config.sql_variables = { my_var: 1 }
     end
     sql_fortifier = MysqlRowGuard::SqlFortifier.for(sql: 'SELECT * FROM posts WHERE type = "comments"', configuration: MysqlRowGuard.configuration)
@@ -56,7 +56,7 @@ describe MysqlRowGuard::SqlFortifier do
     user.current_master_org_id = 1
     MysqlRowGuard.configure do |config|
       config.tables = %w[comments]
-      config.sql_replacement = 'my_%{table}_view'
+      config.sql_replacement = 'my_\k<table>_view'
       config.sql_variables = { my_var: 1 }
     end
     original_sql = 'SELECT * FROM something_else'
@@ -76,7 +76,7 @@ describe MysqlRowGuard::SqlFortifier do
     user.current_master_org_id = 1
     MysqlRowGuard.configure do |config|
       config.tables = %w[comments]
-      config.sql_replacement = 'my_%{table}_view'
+      config.sql_replacement = 'my_\k<table>_view'
       config.sql_variables = { my_var: 1 }
     end
 

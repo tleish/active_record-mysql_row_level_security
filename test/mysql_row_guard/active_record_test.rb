@@ -26,7 +26,7 @@ describe MysqlRowGuard::ActiveRecord do
       MysqlRowGuard.configure do |configuration|
         configuration.tables = %w[books comments]
       end
-      MysqlRowGuard.configuration.sql_replacement = ''
+      MysqlRowGuard.configuration.sql_replacement = '\k<table>'
       original_sql = 'SELECT * FROM books, comments'
       modified_sql, name = mysql_client.execute(original_sql, 'my name')
       assert_equal original_sql, modified_sql
@@ -36,7 +36,7 @@ describe MysqlRowGuard::ActiveRecord do
     it 'returns a configuration with a view' do
       MysqlRowGuard.configure do |configuration|
         configuration.tables = %w[fortune teller]
-        configuration.sql_replacement = 'my_%{table}_view'
+        configuration.sql_replacement = 'my_\k<table>_view'
         configuration.sql_variables = { my_var: 1 }
       end
       original_sql = 'SELECT * FROM fortune, teller'
@@ -49,7 +49,7 @@ describe MysqlRowGuard::ActiveRecord do
     it 'returns a configuration with a view' do
       MysqlRowGuard.configure do |configuration|
         configuration.tables = %w[fortune teller]
-        configuration.sql_replacement = 'my_%{table}_view'
+        configuration.sql_replacement = 'my_\k<table>_view'
         configuration.sql_variables = { my_var: 1 }
       end
       original_sql = 'SELECT * FROM fortune, teller'

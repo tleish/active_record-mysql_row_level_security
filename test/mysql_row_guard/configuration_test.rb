@@ -52,31 +52,39 @@ describe MysqlRowGuard::Configuration do
       assert_equal({}, configuration.tables_hash)
     end
 
-    it 'returns a table hash with' do
+    it 'returns an table hash if there are no tables to modify' do
       configuration = MysqlRowGuard::Configuration.new
       configuration.tables = %w[posts comments]
-      assert_equal({'posts' => 'posts', 'comments' => 'comments'}, configuration.tables_hash)
+      assert_equal({}, configuration.tables_hash)
     end
 
     it 'returns a table hash with custom pattern' do
       configuration = MysqlRowGuard::Configuration.new
       configuration.tables = %w[posts comments]
-      configuration.sql_replacement = 'user_%{table}_view'
+      configuration.sql_replacement = 'user_\k<table>_view'
       assert_equal({'posts' => 'user_posts_view', 'comments' => 'user_comments_view'}, configuration.tables_hash)
     end
   end
 
   describe '#sql_replacement' do
-    it 'returns a sql_replacement' do
+    it 'has a default' do
       configuration = MysqlRowGuard::Configuration.new
       configuration.tables = %w[foo]
       assert_equal '\k<table>', configuration.sql_replacement
     end
 
+    it 'replaces empty with default' do
+      configuration = MysqlRowGuard::Configuration.new
+      configuration.tables = %w[foo]
+      configuration.sql_replacement = ''
+      assert_equal '\k<table>', configuration.sql_replacement
+    end
+
+
     it 'sets a sql_replacement' do
       configuration = MysqlRowGuard::Configuration.new
       configuration.tables = %w[foo]
-      configuration.sql_replacement = 'user_%{table}_view'
+      configuration.sql_replacement = 'user_\k<table>_view'
         assert_equal 'user_\k<table>_view', configuration.sql_replacement
     end
   end
