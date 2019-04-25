@@ -16,13 +16,14 @@ module MysqlRowGuard
       begin
         fortified_sql = fortify(sql)
         super(fortified_sql, name)
-      rescue ::ActiveRecord::StatementInvalid => e
-        if e.message =~ /^Mysql2::Error/ && fortified_sql.respond_to?(:original_sql)
+      rescue ::ActiveRecord::StatementInvalid => error
+        if fortified_sql.respond_to?(:original_sql)
+          MysqlRowGuard.configuration.error_callback(error)
           MysqlRowGuard.disable do
             super(fortified_sql.original_sql, name)
           end
         else
-          raise e
+          raise error
         end
       end
     end
