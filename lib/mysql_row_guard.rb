@@ -35,8 +35,11 @@ module MysqlRowGuard
 
   def self.disable
     @enabled = false
-    results = yield
-    @enabled = true
+    begin
+      results = yield
+    ensure # to always re-enable, regardless of the error
+      @enabled = true
+    end
     results
   end
 end

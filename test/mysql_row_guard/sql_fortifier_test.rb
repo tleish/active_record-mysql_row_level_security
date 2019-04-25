@@ -69,7 +69,7 @@ describe MysqlRowGuard::SqlFortifier do
   end
 
   it 'has a benchmark' do
-    # skip
+    skip
     require 'benchmark'
 
     user = MysqlRowGuard::RowUserFake.new

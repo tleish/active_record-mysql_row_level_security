@@ -80,4 +80,19 @@ describe MysqlRowGuard::Configuration do
         assert_equal 'user_\k<table>_view', configuration.sql_replacement
     end
   end
+
+  describe '#error' do
+    it 'executes a callback' do
+      configuration = MysqlRowGuard::Configuration.new
+      configuration.error do |error|
+        error
+      end
+      assert_equal 'MyError', configuration.error_callback.call('MyError')
+    end
+
+    it 'default callback does nothing' do
+      configuration = MysqlRowGuard::Configuration.new
+      assert_nil configuration.error_callback.call('MyError')
+    end
+  end
 end

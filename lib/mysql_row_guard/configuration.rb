@@ -17,11 +17,12 @@ module MysqlRowGuard
     TABLE_CALLBACK = '\k<table>'
     NAME = 'MysqlRowGuard'
 
-    attr_reader :tables, :sql_variables
+    attr_reader :tables, :sql_variables, :error_callback
     def initialize
       @tables = []
       @sql_replacement = TABLE_CALLBACK
       @sql_variables = {}
+      @error_callback = Proc.new {}
     end
 
     def reset_cache
@@ -63,6 +64,10 @@ module MysqlRowGuard
       raise 'sql_replacement string must include "%{table}"' unless String(string).include?('%{table}')
       reset_cache
       @sql_replacement = string % { table: TABLE_CALLBACK }
+    end
+
+    def error(&block)
+      @error_callback = block
     end
 
     def sql_replacement

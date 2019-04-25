@@ -1,5 +1,7 @@
 require 'mysql_row_guard'
 
+
+
 module MysqlRowGuard
   module ActiveRecord
     # Converts an arel AST to SQL
@@ -11,7 +13,18 @@ module MysqlRowGuard
 
     def execute(sql, name = nil)
       return super(sql, name) unless MysqlRowGuard.enabled?
-      super(fortify(sql), name)
+      begin
+        fortified_sql = fortify(sql)
+        super(fortified_sql, name)
+      rescue ::ActiveRecord::StatementInvalid => e
+        if e.message =~ /^Mysql2::Error/ && fortified_sql.respond_to?(:original_sql)
+          MysqlRowGuard.disable do
+            super(fortified_sql.original_sql, name)
+          end
+        else
+          raise e
+        end
+      end
     end
 
     def fortify(sql)

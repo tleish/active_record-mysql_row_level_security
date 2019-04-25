@@ -50,7 +50,7 @@ module MysqlRowGuard
 
     def sql
       yield if modified_sql? && block_given?
-      @sql ||= stamped_sql.extend(MysqlRowGuard::SqlFingerPrinter::Cached)
+      @sql ||= stamped_sql
     end
 
     def modified_sql?
@@ -58,21 +58,19 @@ module MysqlRowGuard
     end
 
     def stamped_sql
-      if modified_sql?
-        "/* #{finger_print} */ #{new_sql}"
-      else
-        original_sql
-      end
+      local_original_sql = @original_sql
+      local_stamped_sql = if modified_sql?
+                            "/* #{finger_print} */ #{new_sql}"
+                          else
+                            original_sql
+                          end
+                          
+      local_stamped_sql.define_singleton_method(:original_sql) { local_original_sql }
+      local_stamped_sql
     end
 
     def self.stamped?(sql)
-      sql.respond_to?(:mysql_row_guard_cached?)
-    end
-    
-    module Cached
-      def mysql_row_guard_cached?
-        self
-      end
+      sql.respond_to?(:original_sql)
     end
   end
 
