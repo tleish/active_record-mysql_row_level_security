@@ -64,7 +64,7 @@ module MysqlRowGuard
     def sql_replacement=(regex_callback = DEFAULT_TABLE_CALLBACK)
       regex_callback = DEFAULT_TABLE_CALLBACK if regex_callback.empty?
       return if @sql_variables == regex_callback
-      raise 'sql_replacement string must be empty or include "\k<table>"' unless String(regex_callback).include?('\k<table>')
+      raise 'sql_replacement string must be empty or include "\k<table>"' unless regex_callback.include?('\k<table>')
       reset_cache
       @sql_replacement = regex_callback
     end
