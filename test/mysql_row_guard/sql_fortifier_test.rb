@@ -15,6 +15,55 @@ describe MysqlRowGuard::SqlFortifier do
     assert_equal 'comments', sql_fortifier.to_s
   end
 
+  describe 'fingerprinting' do
+    it 'reports true' do
+      MysqlRowGuard.configure do |config|
+        config.tables = %w[comments]
+        config.sql_replacement = '\k<table>'
+      end
+      sql = MysqlRowGuard::SqlFortifier.for(sql: 'comments', configuration: MysqlRowGuard.configuration)
+      assert MysqlRowGuard::SqlFingerPrinter.stamped?(sql)
+    end
+
+    # Note this is important since ActiveRecord will fail if it's not a String class
+    it 'is still a string class' do
+      MysqlRowGuard.configure do |config|
+        config.tables = %w[comments]
+        config.sql_replacement = '\k<table>'
+        config.sql_variables = { my_var: 1 }
+      end
+      sql = MysqlRowGuard::SqlFortifier.for(sql: 'comments', configuration: MysqlRowGuard.configuration)
+      assert String, sql.class
+    end
+
+    it 'reports false' do
+      refute MysqlRowGuard::SqlFingerPrinter.stamped?('test')
+    end
+
+    it 'returns original_sql' do
+      MysqlRowGuard.configure do |config|
+        config.tables = %w[comments]
+        config.sql_replacement = 'my_\k<table>_view'
+        config.sql_variables = { my_var: 1 }
+      end
+      sql = MysqlRowGuard::SqlFortifier.for(sql: 'comments', configuration: MysqlRowGuard.configuration)
+      original_sql = MysqlRowGuard::SqlFingerPrinter.original_sql(sql)
+      assert_match /my_comments_view/, sql
+      assert_equal 'comments', original_sql
+    end
+
+    it 'returns empty original_sql if no change' do
+      MysqlRowGuard.configure do |config|
+        config.tables = %w[comments]
+        config.sql_replacement = ''
+        config.sql_variables = { my_var: 1 }
+      end
+      sql = MysqlRowGuard::SqlFortifier.for(sql: 'comments', configuration: MysqlRowGuard.configuration)
+      assert_equal '', MysqlRowGuard::SqlFingerPrinter.original_sql(sql)
+    end
+  end
+
+
   it 'returns sql with a view' do
     user = MysqlRowGuard::RowUserFake.new
     user.current_master_org_id = 1

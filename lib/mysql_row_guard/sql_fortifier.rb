@@ -33,7 +33,6 @@ module MysqlRowGuard
     def initialize(sql:, configuration: MysqlRowGuard.configuration)
       @original_sql = sql
       @configuration = configuration
-      # @transformer = SqlStringParserTransformer.new(configuration: configuration)
       @transformer = SqlStringParser.new(tables: configuration.tables_hash)
     end
 
@@ -51,7 +50,7 @@ module MysqlRowGuard
     end
 
     def sql
-      @sql ||= stamped_sql
+      @sql ||= stamped_sql.extend(MysqlRowGuard::SqlFingerPrinter::Stamp)
     end
 
     def modified?
@@ -61,19 +60,26 @@ module MysqlRowGuard
     end
 
     def stamped_sql
-      local_original_sql = @original_sql
-      local_stamped_sql = if modified?
-                            "/* #{finger_print} */ #{new_sql}"
-                          else
-                            original_sql
-                          end
-                          
-      local_stamped_sql.define_singleton_method(:original_sql) { local_original_sql }
+      return original_sql unless modified?
+      local_original_sql = original_sql
+      local_stamped_sql = "/* #{finger_print} */ #{new_sql}"
+      local_stamped_sql.define_singleton_method(:original_sql) { local_original_sql } if modified?
       local_stamped_sql
     end
 
     def self.stamped?(sql)
-      sql.respond_to?(:original_sql)
+      sql.respond_to?(:stamped?)
+    end
+
+    def self.original_sql(sql)
+      return '' unless sql.respond_to?(:original_sql)
+      sql.original_sql
+    end
+
+    module Stamp
+      def stamped?
+        true
+      end
     end
   end
 
