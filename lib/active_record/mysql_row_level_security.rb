@@ -1,6 +1,7 @@
 require "active_record/mysql_row_level_security/version"
 require 'active_record/mysql_row_level_security/configuration'
 require 'active_record/mysql_row_level_security/active_record_fortifier'
+require 'active_record/mysql_row_level_security/sql_string_anonymizer'
 
 module ActiveRecord
   module MysqlRowLevelSecurity

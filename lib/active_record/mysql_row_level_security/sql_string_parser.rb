@@ -10,6 +10,7 @@ module ActiveRecord
       STRING_ESCAPE = '\\'
 
       TYPE_QUOTE = :quote
+      TYPE_NUMBER = :number
       TYPE_NON_WORD = :non_word
       TYPE_WORD = :word
 
@@ -21,14 +22,14 @@ module ActiveRecord
       end
 
       def parse(text)
-        text.each_char do |char|
+        text.each_char.with_index do |char, index|
           case char
           when *QUOTE
             @previous_type = TYPE_QUOTE
             if buffer.first == char # end_quote?
               escaped = @escape
               buffer_add(char)
-              flush_quote unless escaped
+              flush_quote unless escaped || quote?(text[index+1])
             else # start of quote
               flush unless quote?(buffer.first)
               buffer_add(char)
