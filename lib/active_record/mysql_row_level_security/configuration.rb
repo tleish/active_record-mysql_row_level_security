@@ -18,7 +18,7 @@ module ActiveRecord
   module MysqlRowLevelSecurity
     class Configuration
       DEFAULT_TABLE_CALLBACK = '\k<table>'
-      NAME = 'ActiveRecord::MysqlRowLevelSecurity'
+      NAME = 'MysqlRowLevelSecurity'
 
       attr_reader :tables, :sql_variables, :error_callback
       def initialize
