@@ -54,6 +54,7 @@ module ActiveRecord
   end
 end
 
-if defined? ::ActiveRecord::ConnectionAdapters::Mysql2Adapter
+if defined? ActiveRecord::Base # the main active_record gem is loaded
+  require 'active_record/connection_adapters/mysql2_adapter'
   ::ActiveRecord::ConnectionAdapters::Mysql2Adapter.prepend ActiveRecord::MysqlRowLevelSecurity::ActiveRecordFortifier
 end
