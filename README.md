@@ -69,7 +69,8 @@ If an error occurs as a result of the modified SQL, the default behavior is to r
 ActiveRecord::MysqlRowLevelSecurity.configure do |configuration|
   #... 
   configuration.error do |error|
-      puts error.message
+    puts error.message
+    raise error
   end
 end
 ```
