@@ -52,16 +52,16 @@ Put the following in an initializer
 
 ```ruby
 ActiveRecord::MysqlRowLevelSecurity.configure do |configuration|
-  configuration.tables = %w[books comments] 
-  configuration.sql_replacement = 'my_%{table}_view' # %{table} must be included in the string  
+  configuration.tables = %w[books comments]
+  configuration.sql_variables = {my_user_id: User.current_user.id} 
+  configuration.sql_replacement = 'my_\k<table>_view' # `\k<table>` must be included in the string  
+  configuration.error do |error|
+      puts error.message
+  end
 end
 ```
 
-Then at run time, determine your RowIdentityUser used in your SQL Variables and set using the following before any SQL for the Row Security Tables are executed:
-
-```ruby
-ActiveRecord::MysqlRowLevelSecurity.configuration.sql_variables = {my_user_id: 3}
-```
+Then at run time the above configuration will run and can be dynamic using application variables, determine your RowIdentityUser used in your SQL Variables and set using the following before any SQL for the Row Security Tables are executed:
 
 The results will be that the SQL variable will be set for a given MySQL session requests and any tables specified will be replaced by their view specifics
 
