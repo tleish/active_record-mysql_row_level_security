@@ -22,17 +22,18 @@ module ActiveRecord
       end
 
       def parse(text)
-        text.each_char.with_index do |char, index|
+        chars = text.chars
+        chars.each_with_index do |char, index|
           case char
           when *QUOTE
             @previous_type = TYPE_QUOTE
             if buffer.first == char # end_quote?
               escaped = @escape
-              buffer_add(char)
-              flush_quote unless escaped || quote?(text[index+1])
+              buffer_add(char, true)
+              flush_quote unless escaped || chars[index+1] == char
             else # start of quote
               flush unless quote?(buffer.first)
-              buffer_add(char)
+              buffer_add(char, true)
             end
           when NON_WORD
             flush unless @previous_type == NON_WORD
@@ -52,18 +53,18 @@ module ActiveRecord
 
       private
 
-      def buffer_add(char)
-        record_escape(char)
+      def buffer_add(char, quote=false)
+        record_escape(char, quote)
         @previous = char
         @buffer << char
       end
 
-      def record_escape(char)
+      def record_escape(char, quote=false)
         if @escape
           @escape = false
         elsif char == STRING_ESCAPE
           @escape = true
-        elsif quote?(char)
+        elsif quote
           @escape = (char == buffer.first)
         else
           @escape = false
