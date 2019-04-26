@@ -1,8 +1,8 @@
 require 'test_helper'
-require 'mysql_row_level_security/sql_string_parser'
+require 'active_record/mysql_row_level_security/sql_string_parser'
 
-describe MysqlRowLevelSecurity::SqlStringParser do
-  let(:parser) { MysqlRowLevelSecurity::SqlStringParser.new(tables: {'posts' => 'post_view', 'comments' => 'my_comments_view'}) }
+describe ActiveRecord::MysqlRowLevelSecurity::SqlStringParser do
+  let(:parser) { ActiveRecord::MysqlRowLevelSecurity::SqlStringParser.new(tables: {'posts' => 'post_view', 'comments' => 'my_comments_view'}) }
 
   describe 'table replacement' do
     it 'renames a specified table' do

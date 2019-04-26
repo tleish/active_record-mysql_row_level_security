@@ -1,17 +1,17 @@
 
 lib = File.expand_path("../lib", __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require "mysql_row_level_security/version"
+require "active_record/mysql_row_level_security/version"
 
 Gem::Specification.new do |spec|
-  spec.name          = "mysql_row_level_security"
-  spec.version       = MysqlRowLevelSecurity::VERSION
+  spec.name          = "active_record-mysql_row_level_security"
+  spec.version       = ActiveRecord::MysqlRowLevelSecurity::VERSION
   spec.authors       = ["tleish"]
   spec.email         = ["tleish@hotmail.com"]
 
   spec.summary       = %q{MySQL Row Security for ActiveRecord.}
   spec.description   = %q{MySQL Row Security for ActiveRecord using MySQL views and MySQL variables.}
-  spec.homepage      = "https://github.com/tleish/mysql_row_level_security"
+  spec.homepage      = "https://github.com/tleish/active_record-mysql_row_level_security"
   spec.license       = "MIT"
 
   # Prevent pushing this gem to RubyGems.org. To allow pushes either set the 'allowed_push_host'
@@ -20,8 +20,8 @@ Gem::Specification.new do |spec|
     spec.metadata["allowed_push_host"] = 'http://mygemserver.com'
 
     spec.metadata["homepage_uri"] = spec.homepage
-    spec.metadata["source_code_uri"] = 'https://github.com/tleish/mysql_row_level_security'
-    spec.metadata["changelog_uri"] = 'https://github.com/tleish/mysql_row_level_security'
+    spec.metadata["source_code_uri"] = 'https://github.com/tleish/active_record-mysql_row_level_security'
+    spec.metadata["changelog_uri"] = 'https://github.com/tleish/active_record-mysql_row_level_security'
   else
     raise "RubyGems 2.0 or newer is required to protect against " \
       "public gem pushes."
