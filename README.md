@@ -45,6 +45,8 @@ CREATE VIEW my_posts_view AS SELECT * FROM posts WHERE user_id = my_user_id();
 ```
 
 Do the above for each of the tables you want to replace.
+
+NOTE: If the included table has a schema change, then the view must be rebuilt to pickup the new schema changes.
       
 ## Usage
 
