@@ -48,22 +48,32 @@ Do the above for each of the tables you want to replace.
       
 ## Usage
 
-Put the following in an initializer
+Setup the configuration callback in an initializer
 
 ```ruby
 ActiveRecord::MysqlRowLevelSecurity.configure do |configuration|
   configuration.tables = %w[books comments]
   configuration.sql_variables = {my_user_id: User.current_user.id} 
   configuration.sql_replacement = 'my_\k<table>_view' # `\k<table>` must be included in the string  
+end
+```
+
+Then at run time the above configuration will run and can be dynamic using application variables, determine your RowIdentityUser used in your SQL Variables and set using the following before any SQL for the Row Security Tables are executed:
+
+The results will be that the SQL variable will be set for a given MySQL session requests and any tables specified will be replaced by their view specifics.
+
+## Error
+
+If an error occurs as a result of the modified SQL, the default behavior is to retry the query using the original/unmodified query.  However, you can add additional error logging/handling by adding the following configuration.
+```ruby
+ActiveRecord::MysqlRowLevelSecurity.configure do |configuration|
+  #... 
   configuration.error do |error|
       puts error.message
   end
 end
 ```
 
-Then at run time the above configuration will run and can be dynamic using application variables, determine your RowIdentityUser used in your SQL Variables and set using the following before any SQL for the Row Security Tables are executed:
-
-The results will be that the SQL variable will be set for a given MySQL session requests and any tables specified will be replaced by their view specifics
 
 ## Contributing
 

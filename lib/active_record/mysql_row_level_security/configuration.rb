@@ -25,7 +25,7 @@ module ActiveRecord
         @tables = []
         @sql_replacement = DEFAULT_TABLE_CALLBACK
         @sql_variables = {}
-        @error_callback = Proc.new { |error| raise error }
+        @error_callback = Proc.new { }
       end
 
       def reset_cache

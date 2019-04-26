@@ -100,10 +100,8 @@ describe ActiveRecord::MysqlRowLevelSecurity::Configuration do
 
     it 'default callback does nothing' do
       configuration = ActiveRecord::MysqlRowLevelSecurity::Configuration.new
-      exception = assert_raises RuntimeError do
-        configuration.error_callback.call('MyError')
-      end
-      assert_equal 'MyError', exception.message
+      exception = configuration.error_callback.call('MyError')
+      assert_nil exception
     end
   end
 end
