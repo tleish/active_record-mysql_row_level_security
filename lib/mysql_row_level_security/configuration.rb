@@ -1,6 +1,6 @@
 require 'ostruct'
 
-module MysqlRowGuard
+module MysqlRowLevelSecurity
   module SqlVariablesHashRefinement
     refine Hash do
       def to_sql
@@ -10,12 +10,12 @@ module MysqlRowGuard
   end
 end
 
-using MysqlRowGuard::SqlVariablesHashRefinement
+using MysqlRowLevelSecurity::SqlVariablesHashRefinement
 
-module MysqlRowGuard
+module MysqlRowLevelSecurity
   class Configuration
     DEFAULT_TABLE_CALLBACK = '\k<table>'
-    NAME = 'MysqlRowGuard'
+    NAME = 'MysqlRowLevelSecurity'
 
     attr_reader :tables, :sql_variables, :error_callback
     def initialize

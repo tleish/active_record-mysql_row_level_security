@@ -1,8 +1,8 @@
 require 'test_helper'
-require 'mysql_row_guard/sql_string_parser'
+require 'mysql_row_level_security/sql_string_parser'
 
-describe MysqlRowGuard::SqlStringParser do
-  let(:parser) { MysqlRowGuard::SqlStringParser.new(tables: {'posts' => 'post_view', 'comments' => 'my_comments_view'}) }
+describe MysqlRowLevelSecurity::SqlStringParser do
+  let(:parser) { MysqlRowLevelSecurity::SqlStringParser.new(tables: {'posts' => 'post_view', 'comments' => 'my_comments_view'}) }
 
   describe 'table replacement' do
     it 'renames a specified table' do

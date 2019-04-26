@@ -1,8 +1,8 @@
 require 'test_helper'
-require 'mysql_row_guard'
+require 'mysql_row_level_security'
 require 'ostruct'
 
-module MysqlRowGuard
+module MysqlRowLevelSecurity
   class ActiveRecordFake
     attr_reader :connection
     def initialize
@@ -17,38 +17,38 @@ module MysqlRowGuard
       arel
     end
   end
-  MysqlRowGuard::ActiveRecordFake.prepend MysqlRowGuard::ActiveRecord
+  MysqlRowLevelSecurity::ActiveRecordFake.prepend MysqlRowLevelSecurity::ActiveRecord
 
 
   class FakeError < StandardError; end
 
-  class ActiveRecordExceptionFake < MysqlRowGuard::ActiveRecordFake
+  class ActiveRecordExceptionFake < MysqlRowLevelSecurity::ActiveRecordFake
     def execute(sql, name = nil)
-      raise MysqlRowGuard::FakeError if sql.empty?
+      raise MysqlRowLevelSecurity::FakeError if sql.empty?
       super(sql, name)
     end
   end
 
   module ActiveRecord::StatementInvalid
     def fortified_exception
-      MysqlRowGuard::FakeError
+      MysqlRowLevelSecurity::FakeError
     end
   end
-  MysqlRowGuard::ActiveRecordExceptionFake.prepend MysqlRowGuard::ActiveRecord
-  MysqlRowGuard::ActiveRecordExceptionFake.prepend MysqlRowGuard::ActiveRecord::StatementInvalid
+  MysqlRowLevelSecurity::ActiveRecordExceptionFake.prepend MysqlRowLevelSecurity::ActiveRecord
+  MysqlRowLevelSecurity::ActiveRecordExceptionFake.prepend MysqlRowLevelSecurity::ActiveRecord::StatementInvalid
 
 end
 
 
-describe MysqlRowGuard::ActiveRecord do
-  let(:mysql_client) { MysqlRowGuard::ActiveRecordFake.new }
+describe MysqlRowLevelSecurity::ActiveRecord do
+  let(:mysql_client) { MysqlRowLevelSecurity::ActiveRecordFake.new }
 
   describe '#execute' do
     it 'does not modify a query' do
-      MysqlRowGuard.configure do |configuration|
+      MysqlRowLevelSecurity.configure do |configuration|
         configuration.tables = %w[books comments]
       end
-      MysqlRowGuard.configuration.sql_replacement = '\k<table>'
+      MysqlRowLevelSecurity.configuration.sql_replacement = '\k<table>'
       original_sql = 'SELECT * FROM books, comments'
       modified_sql, name = mysql_client.execute(original_sql, 'my name')
       assert_equal original_sql, modified_sql
@@ -56,7 +56,7 @@ describe MysqlRowGuard::ActiveRecord do
     end
 
     it 'returns a configuration with a view' do
-      MysqlRowGuard.configure do |configuration|
+      MysqlRowLevelSecurity.configure do |configuration|
         configuration.tables = %w[fortune teller]
         configuration.sql_replacement = 'my_\k<table>_view'
         configuration.sql_variables = { my_var: 1 }
@@ -68,27 +68,27 @@ describe MysqlRowGuard::ActiveRecord do
 
     it 'raises an error when sql is bad' do
       error = nil
-      MysqlRowGuard.configure do |configuration|
+      MysqlRowLevelSecurity.configure do |configuration|
         configuration.tables = %w[fortune teller]
         configuration.sql_replacement = 'my_\k<table>_view'
         configuration.sql_variables = { my_var: 1 }
         configuration.error { |error| error }
       end
-      mysql_client = MysqlRowGuard::ActiveRecordExceptionFake.new
-      exception = assert_raises MysqlRowGuard::FakeError do
+      mysql_client = MysqlRowLevelSecurity::ActiveRecordExceptionFake.new
+      exception = assert_raises MysqlRowLevelSecurity::FakeError do
         modified_sql, _ = mysql_client.execute('')
       end
     end
 
     it 're-executes original sql if error' do
       error = nil
-      MysqlRowGuard.configure do |configuration|
+      MysqlRowLevelSecurity.configure do |configuration|
         configuration.tables = %w[fortune teller]
         configuration.sql_replacement = 'my_\k<table>_view'
         configuration.sql_variables = { my_var: 1 }
         configuration.error { |error| error }
       end
-      mysql_client = MysqlRowGuard::ActiveRecordExceptionFake.new
+      mysql_client = MysqlRowLevelSecurity::ActiveRecordExceptionFake.new
       original_sql = 'SELECT * FROM fortune, teller'
       sql = ''
       sql.define_singleton_method(:original_sql) { original_sql }
@@ -98,13 +98,13 @@ describe MysqlRowGuard::ActiveRecord do
 
     it 'calls custom configuration error before SQL error retry' do
       error = nil
-      MysqlRowGuard.configure do |configuration|
+      MysqlRowLevelSecurity.configure do |configuration|
         configuration.tables = %w[fortune teller]
         configuration.sql_replacement = 'my_\k<table>_view'
         configuration.sql_variables = { my_var: 1 }
         configuration.error { |error| raise 'Custom Error' }
       end
-      mysql_client = MysqlRowGuard::ActiveRecordExceptionFake.new
+      mysql_client = MysqlRowLevelSecurity::ActiveRecordExceptionFake.new
       original_sql = 'SELECT * FROM fortune, teller'
       sql = ''
       sql.define_singleton_method(:original_sql) { original_sql }
@@ -117,7 +117,7 @@ describe MysqlRowGuard::ActiveRecord do
 
   describe '#to_sql' do
     it 'returns a configuration with a view' do
-      MysqlRowGuard.configure do |configuration|
+      MysqlRowLevelSecurity.configure do |configuration|
         configuration.tables = %w[fortune teller]
         configuration.sql_replacement = 'my_\k<table>_view'
         configuration.sql_variables = { my_var: 1 }

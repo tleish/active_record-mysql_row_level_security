@@ -1,9 +1,9 @@
-require 'mysql_row_guard/sql_string_parser'
+require 'mysql_row_level_security/sql_string_parser'
 
-module MysqlRowGuard
+module MysqlRowLevelSecurity
   class SqlFortifier
     IGNORE_COMMANDS = %w[SHOW]
-    def self.for(sql:, active_record: nil, configuration: MysqlRowGuard.configuration)
+    def self.for(sql:, active_record: nil, configuration: MysqlRowLevelSecurity.configuration)
       # Only fortify once
       return sql if SqlFingerPrinter.stamped?(sql)
 
@@ -30,7 +30,7 @@ module MysqlRowGuard
     end
 
     attr_reader :original_sql, :configuration, :transformer
-    def initialize(sql:, configuration: MysqlRowGuard.configuration)
+    def initialize(sql:, configuration: MysqlRowLevelSecurity.configuration)
       @original_sql = sql
       @configuration = configuration
       @transformer = SqlStringParser.new(tables: configuration.tables_hash)
@@ -50,7 +50,7 @@ module MysqlRowGuard
     end
 
     def sql
-      @sql ||= stamped_sql.extend(MysqlRowGuard::SqlFingerPrinter::Stamp)
+      @sql ||= stamped_sql.extend(MysqlRowLevelSecurity::SqlFingerPrinter::Stamp)
     end
 
     def modified?

@@ -1,26 +1,26 @@
-require 'mysql_row_guard'
+require 'mysql_row_level_security'
 
-module MysqlRowGuard
+module MysqlRowLevelSecurity
   module ActiveRecord
     # Converts an arel AST to SQL
     def to_sql(arel, binds = [])
       sql = super(arel, binds)
-      return sql unless MysqlRowGuard.enabled?
+      return sql unless MysqlRowLevelSecurity.enabled?
       fortify(sql)
     end
 
     def execute(sql, name = nil)
-      return super(sql, name) unless MysqlRowGuard.enabled?
+      return super(sql, name) unless MysqlRowLevelSecurity.enabled?
       begin
         fortified_sql = fortify(sql)
         super(fortified_sql, name)
       rescue fortified_exception => error
-        original_sql = MysqlRowGuard::SqlFingerPrinter.original_sql(fortified_sql)
+        original_sql = MysqlRowLevelSecurity::SqlFingerPrinter.original_sql(fortified_sql)
         if original_sql.empty?
           raise error
         else
-          MysqlRowGuard.disable do
-            MysqlRowGuard.configuration.error_callback.call(error)
+          MysqlRowLevelSecurity.disable do
+            MysqlRowLevelSecurity.configuration.error_callback.call(error)
             super(original_sql, name)
           end
         end
@@ -32,8 +32,8 @@ module MysqlRowGuard
     end
 
     def fortify(sql)
-      configuration = MysqlRowGuard.configuration
-      fortified_sql = MysqlRowGuard::SqlFortifier.for(sql: sql, active_record: self) do |active_record|
+      configuration = MysqlRowLevelSecurity.configuration
+      fortified_sql = MysqlRowLevelSecurity::SqlFortifier.for(sql: sql, active_record: self) do |active_record|
         active_record.ensure_mysql_row_guard_variables(configuration)
       end
       fortified_sql
@@ -53,5 +53,5 @@ end
 
 if defined? ::ActiveRecord
   require 'active_record/connection_adapters/mysql2_adapter'
-  ::ActiveRecord::ConnectionAdapters::Mysql2Adapter.prepend MysqlRowGuard::ActiveRecord
+  ::ActiveRecord::ConnectionAdapters::Mysql2Adapter.prepend MysqlRowLevelSecurity::ActiveRecord
 end

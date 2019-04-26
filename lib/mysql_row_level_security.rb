@@ -1,9 +1,9 @@
-require "mysql_row_guard/version"
-require 'mysql_row_guard/configuration'
-require 'mysql_row_guard/sql_fortifier'
-require 'mysql_row_guard/active_record'
+require "mysql_row_level_security/version"
+require 'mysql_row_level_security/configuration'
+require 'mysql_row_level_security/sql_fortifier'
+require 'mysql_row_level_security/active_record'
 
-module MysqlRowGuard
+module MysqlRowLevelSecurity
   class Error < StandardError; end
 
   class << self
@@ -13,7 +13,7 @@ module MysqlRowGuard
 
   @configuration = Configuration.new
   def self.configuration
-    MysqlRowGuard.disable do
+    MysqlRowLevelSecurity.disable do
       @configuration_callback.call(@configuration) if @configuration_callback.is_a? Proc
       @configuration
     end

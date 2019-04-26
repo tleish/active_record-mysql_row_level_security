@@ -1,6 +1,6 @@
-require 'mysql_row_guard'
+require 'mysql_row_level_security'
 
-module MysqlRowGuard
+module MysqlRowLevelSecurity
   class SqlStringParser
     attr_reader :tables, :buffer, :output, :previous
     
