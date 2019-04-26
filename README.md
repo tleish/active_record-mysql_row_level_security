@@ -7,7 +7,7 @@ MySQL Row Security for ActiveRecord using MySQL views and MySQL variables.
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'active_record-mysql_row_level_security'
+gem 'active_record-mysql_row_level_security', github: 'com:tleish/active_record-mysql_row_level_security'
 ```
 
 And then execute:
