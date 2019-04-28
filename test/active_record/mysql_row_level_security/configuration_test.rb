@@ -6,6 +6,18 @@ class ActiveRecord::MysqlRowLevelSecurity::RowUserFake
   attr_accessor :current_org_id, :current_master_org_id
 end
 
+module ActiveRecord
+  module ConfigurationResetCacheFake
+    def reset_cache
+      raise 'reset_cache should not have been called'
+    end
+
+    def self.reset_cache
+      raise 'reset_cache should not have been called'
+    end
+  end
+end
+
 describe ActiveRecord::MysqlRowLevelSecurity::Configuration do
   describe '#init_command' do
     it 'returns empty with no sql variables defined' do
@@ -17,6 +29,28 @@ describe ActiveRecord::MysqlRowLevelSecurity::Configuration do
       configuration = ActiveRecord::MysqlRowLevelSecurity::Configuration.new
       configuration.sql_variables = {foo: 1, bar: 2}
       assert_equal 'SET @foo := 1, @bar := 2', configuration.init_command
+    end
+  end
+
+  describe '#sql_variables' do
+    it 'resets variables' do
+      configuration = ActiveRecord::MysqlRowLevelSecurity::Configuration.new
+      configuration.sql_variables = {test: 1}
+
+      configuration.init_command
+      refute configuration.instance_variable_get("@init_command").nil?
+      configuration.sql_variables = {test: 2}
+      assert configuration.instance_variable_get("@init_command").nil?
+    end
+
+    it 'does not reset variables' do
+      configuration = ActiveRecord::MysqlRowLevelSecurity::Configuration.new
+      configuration.sql_variables = {test: 1}
+
+      configuration.init_command
+      refute configuration.instance_variable_get("@init_command").nil?
+      configuration.sql_variables = {test: 1}
+      refute configuration.instance_variable_get("@init_command").nil?
     end
   end
 
@@ -44,6 +78,28 @@ describe ActiveRecord::MysqlRowLevelSecurity::Configuration do
       configuration.tables = %w[posts comments]
       assert_equal /\b(?<table>posts|comments)\b/i, configuration.sql_pattern
     end
+
+    it 'resets variables' do
+      configuration = ActiveRecord::MysqlRowLevelSecurity::Configuration.new
+      configuration.tables = %w[foo]
+      configuration.sql_variables = {test: 1}
+
+      configuration.init_command
+      refute configuration.instance_variable_get("@init_command").nil?
+      configuration.tables = %w[other]
+      assert configuration.instance_variable_get("@init_command").nil?
+    end
+
+    it 'does not reset variables' do
+      configuration = ActiveRecord::MysqlRowLevelSecurity::Configuration.new
+      configuration.tables = %w[foo]
+      configuration.sql_variables = {test: 1}
+
+      configuration.init_command
+      refute configuration.instance_variable_get("@init_command").nil?
+      configuration.tables = %w[foo]
+      refute configuration.instance_variable_get("@init_command").nil?
+    end
   end
 
   describe '#tables_hash' do
@@ -64,6 +120,31 @@ describe ActiveRecord::MysqlRowLevelSecurity::Configuration do
       configuration.sql_replacement = 'user_\k<table>_view'
       assert_equal({'posts' => 'user_posts_view', 'comments' => 'user_comments_view'}, configuration.tables_hash)
     end
+
+
+    it 'resets variables' do
+      configuration = ActiveRecord::MysqlRowLevelSecurity::Configuration.new
+      configuration.tables = %w[foo]
+      configuration.sql_replacement = 'user_\k<table>_view'
+      configuration.sql_variables = {test: 1}
+
+      configuration.init_command
+      refute configuration.instance_variable_get("@init_command").nil?
+      configuration.sql_replacement = '\k<table>'
+      assert configuration.instance_variable_get("@init_command").nil?
+    end
+
+    it 'does not reset variables' do
+      configuration = ActiveRecord::MysqlRowLevelSecurity::Configuration.new
+      configuration.tables = %w[foo]
+      configuration.sql_replacement = 'user_\k<table>_view'
+      configuration.sql_variables = {test: 1}
+
+      configuration.init_command
+      refute configuration.instance_variable_get("@init_command").nil?
+      configuration.sql_replacement = 'user_\k<table>_view'
+      refute configuration.instance_variable_get("@init_command").nil?
+    end
   end
 
   describe '#sql_replacement' do
@@ -80,12 +161,35 @@ describe ActiveRecord::MysqlRowLevelSecurity::Configuration do
       assert_equal '\k<table>', configuration.sql_replacement
     end
 
-
     it 'sets a sql_replacement' do
       configuration = ActiveRecord::MysqlRowLevelSecurity::Configuration.new
       configuration.tables = %w[foo]
       configuration.sql_replacement = 'user_\k<table>_view'
         assert_equal 'user_\k<table>_view', configuration.sql_replacement
+    end
+
+    it 'resets variables' do
+      configuration = ActiveRecord::MysqlRowLevelSecurity::Configuration.new
+      configuration.tables = %w[foo]
+      configuration.sql_replacement = 'user_\k<table>_view'
+      configuration.sql_variables = {test: 1}
+
+      configuration.init_command
+      refute configuration.instance_variable_get("@init_command").nil?
+      configuration.sql_replacement = '\k<table>'
+      assert configuration.instance_variable_get("@init_command").nil?
+    end
+
+    it 'does not reset variables' do
+      configuration = ActiveRecord::MysqlRowLevelSecurity::Configuration.new
+      configuration.tables = %w[foo]
+      configuration.sql_replacement = 'user_\k<table>_view'
+      configuration.sql_variables = {test: 1}
+
+      configuration.init_command
+      refute configuration.instance_variable_get("@init_command").nil?
+      configuration.sql_replacement = 'user_\k<table>_view'
+      refute configuration.instance_variable_get("@init_command").nil?
     end
   end
 

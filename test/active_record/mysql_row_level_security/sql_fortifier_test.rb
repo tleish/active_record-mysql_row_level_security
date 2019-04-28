@@ -137,10 +137,7 @@ describe ActiveRecord::MysqlRowLevelSecurity::SqlFortifier do
       sql_fortifier.to_s
     end
     seconds = Time.now - start_time
-    assert seconds < 1, "10,000 calls MUST execute in less than 1 second, this took #{seconds} seconds"
-    puts '<' * 20
-    puts "10,000 calls MUST execute in less than 1 second, this took #{seconds} seconds"
-    puts '>' * 20
+    assert seconds < 0.75, "10,000 calls MUST execute in less than 1 second, this took #{seconds} seconds"
   end
 
 
