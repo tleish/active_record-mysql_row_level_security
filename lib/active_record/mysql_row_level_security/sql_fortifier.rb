@@ -15,10 +15,10 @@ module ActiveRecord
         # See: ActiveRecord::ConnectionAdapters::AbstractMysqlAdapter#create_table_info
         #
         # Don't parse if the init_command is empty
-        new_sql = if !configuration.query_types_match?(sql) || configuration.init_command.empty?
-                    sql
-                  else
+        new_sql = if configuration.query_types_match?(sql) && !configuration.init_command.empty?
                     new(sql: sql, configuration: configuration).sql
+                  else
+                    sql
                   end
 
         sql_finger_printed = SqlFingerPrinter.new(original_sql: sql, new_sql: new_sql, finger_print: configuration.init_command)
