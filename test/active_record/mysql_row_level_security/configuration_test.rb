@@ -208,4 +208,19 @@ describe ActiveRecord::MysqlRowLevelSecurity::Configuration do
       assert_nil exception
     end
   end
+
+  describe '#query_types' do
+    it 'defaults to SELECT' do
+      configuration = ActiveRecord::MysqlRowLevelSecurity::Configuration.new
+      assert configuration.query_types_match?('SELECT *')
+    end
+
+    it 'can update' do
+      configuration = ActiveRecord::MysqlRowLevelSecurity::Configuration.new
+      configuration.query_types = ['UPDATE']
+      refute configuration.query_types_match?('SELECT FROM UPDATE')
+      assert configuration.query_types_match?('UPDATE *')
+      configuration.query_types = ActiveRecord::MysqlRowLevelSecurity::Configuration::DEFAULT_QUERY_TYPES # reset back
+    end
+  end
 end

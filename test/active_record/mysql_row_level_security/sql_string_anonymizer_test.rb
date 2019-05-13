@@ -62,7 +62,6 @@ describe ActiveRecord::MysqlRowLevelSecurity::SqlStringParser do
     end
 
     it 'handles sub-queries' do
-      skip
       sql = %(SELECT * FROM post_view JOIN (SELECT * FROM comments WHERE comments.posts_type = 'posts''' AND comments.id = 1))
       assert_equal %(SELECT * FROM post_view JOIN (SELECT * FROM comments WHERE comments.posts_type = ? AND comments.id = ?)), parser.parse(sql)
     end

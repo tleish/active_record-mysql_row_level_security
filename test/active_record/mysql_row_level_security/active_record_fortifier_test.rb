@@ -115,6 +115,19 @@ describe ActiveRecord::MysqlRowLevelSecurity::ActiveRecordFortifier do
       end
       assert_equal 'Custom Error', exception.message
     end
+
+    it 'sets init command for connection' do
+      ActiveRecord::MysqlRowLevelSecurity.configure do |configuration|
+        configuration.tables = %w[fortune teller]
+        configuration.sql_replacement = 'my_\k<table>_view'
+        configuration.sql_variables = { my_var: 1 }
+      end
+      assert_nil mysql_client.connection.query_options[:init_command]
+      original_sql = 'SELECT * FROM fortune, teller'
+      modified_sql, _ = mysql_client.execute(original_sql)
+      assert_equal '/* SET @my_var := 1 */ SELECT * FROM my_fortune_view, my_teller_view', modified_sql
+      assert_equal 'SET @my_var := 1', mysql_client.connection.query_options[:init_command]
+    end
   end
 
   describe '#to_sql' do

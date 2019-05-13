@@ -55,6 +55,7 @@ Setup the configuration callback in an initializer
 ```ruby
 ActiveRecord::MysqlRowLevelSecurity.configure do |configuration|
   configuration.tables = %w[books comments]
+  configuration.tables = %w[SELECT] # optional, default is ['SELECT'] queries only
   configuration.sql_variables = {my_user_id: User.current_user.id} 
   configuration.sql_replacement = 'my_\k<table>_view' # `\k<table>` must be included in the string  
 end

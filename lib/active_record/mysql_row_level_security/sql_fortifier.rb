@@ -3,7 +3,6 @@ require 'active_record/mysql_row_level_security/sql_string_parser'
 module ActiveRecord
   module MysqlRowLevelSecurity
     class SqlFortifier
-      IGNORE_COMMANDS = %w[SHOW]
       def self.for(sql:, active_record: nil, configuration: ActiveRecord::MysqlRowLevelSecurity.configuration)
         # Only fortify once
         return sql if SqlFingerPrinter.stamped?(sql)
@@ -16,7 +15,7 @@ module ActiveRecord
         # See: ActiveRecord::ConnectionAdapters::AbstractMysqlAdapter#create_table_info
         #
         # Don't parse if the init_command is empty
-        new_sql = if IGNORE_COMMANDS.include?(sql[0..3].upcase) || configuration.init_command.empty?
+        new_sql = if !configuration.query_types_match?(sql) || configuration.init_command.empty?
                     sql
                   else
                     new(sql: sql, configuration: configuration).sql

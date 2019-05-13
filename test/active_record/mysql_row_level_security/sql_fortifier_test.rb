@@ -46,10 +46,10 @@ describe ActiveRecord::MysqlRowLevelSecurity::SqlFortifier do
         config.sql_replacement = 'my_\k<table>_view'
         config.sql_variables = { my_var: 1 }
       end
-      sql = ActiveRecord::MysqlRowLevelSecurity::SqlFortifier.for(sql: 'comments', configuration: ActiveRecord::MysqlRowLevelSecurity.configuration)
+      sql = ActiveRecord::MysqlRowLevelSecurity::SqlFortifier.for(sql: 'SELECT comments', configuration: ActiveRecord::MysqlRowLevelSecurity.configuration)
       original_sql = ActiveRecord::MysqlRowLevelSecurity::SqlFingerPrinter.original_sql(sql)
       assert_match /my_comments_view/, sql
-      assert_equal 'comments', original_sql
+      assert_equal 'SELECT comments', original_sql
     end
 
     it 'returns empty original_sql if no change' do
@@ -58,11 +58,39 @@ describe ActiveRecord::MysqlRowLevelSecurity::SqlFortifier do
         config.sql_replacement = ''
         config.sql_variables = { my_var: 1 }
       end
-      sql = ActiveRecord::MysqlRowLevelSecurity::SqlFortifier.for(sql: 'comments', configuration: ActiveRecord::MysqlRowLevelSecurity.configuration)
+      sql = ActiveRecord::MysqlRowLevelSecurity::SqlFortifier.for(sql: 'SELECT comments', configuration: ActiveRecord::MysqlRowLevelSecurity.configuration)
       assert_equal '', ActiveRecord::MysqlRowLevelSecurity::SqlFingerPrinter.original_sql(sql)
     end
   end
 
+
+  describe 'filter sql types' do
+    it 'does not modify queries beginning with the SHOW command' do
+      user = ActiveRecord::MysqlRowLevelSecurity::RowUserFake.new
+      user.current_master_org_id = 1
+      ActiveRecord::MysqlRowLevelSecurity.configure do |config|
+        config.tables = %w[comments]
+        config.sql_replacement = 'my_\k<table>_view'
+        config.sql_variables = { my_var: 1 }
+      end
+      sql_fortifier = ActiveRecord::MysqlRowLevelSecurity::SqlFortifier.for(sql: 'DELETE comments', configuration: ActiveRecord::MysqlRowLevelSecurity.configuration)
+      assert_equal 'DELETE comments', sql_fortifier.to_s
+    end
+
+    it 'does not modify queries beginning with the SHOW command' do
+      user = ActiveRecord::MysqlRowLevelSecurity::RowUserFake.new
+      user.current_master_org_id = 1
+      ActiveRecord::MysqlRowLevelSecurity.configure do |config|
+        config.tables = %w[comments]
+        config.sql_replacement = 'my_\k<table>_view'
+        config.sql_variables = { my_var: 1 }
+        config.query_types = ['DELETE']
+      end
+      sql_fortifier = ActiveRecord::MysqlRowLevelSecurity::SqlFortifier.for(sql: 'DELETE comments', configuration: ActiveRecord::MysqlRowLevelSecurity.configuration)
+      assert_equal '/* SET @my_var := 1 */ DELETE my_comments_view', sql_fortifier.to_s
+      ActiveRecord::MysqlRowLevelSecurity.configuration.query_types = ActiveRecord::MysqlRowLevelSecurity::Configuration::DEFAULT_QUERY_TYPES
+    end
+  end
 
   it 'returns sql with a view' do
     user = ActiveRecord::MysqlRowLevelSecurity::RowUserFake.new
@@ -72,8 +100,8 @@ describe ActiveRecord::MysqlRowLevelSecurity::SqlFortifier do
       config.sql_replacement = 'my_\k<table>_view'
       config.sql_variables = { my_var: 1 }
     end
-    sql_fortifier = ActiveRecord::MysqlRowLevelSecurity::SqlFortifier.for(sql: 'comments', configuration: ActiveRecord::MysqlRowLevelSecurity.configuration)
-    assert_equal '/* SET @my_var := 1 */ my_comments_view', sql_fortifier.to_s
+    sql_fortifier = ActiveRecord::MysqlRowLevelSecurity::SqlFortifier.for(sql: 'SELECT comments', configuration: ActiveRecord::MysqlRowLevelSecurity.configuration)
+    assert_equal '/* SET @my_var := 1 */ SELECT my_comments_view', sql_fortifier.to_s
   end
 
   it 'does not modify queries beginning with the SHOW command' do

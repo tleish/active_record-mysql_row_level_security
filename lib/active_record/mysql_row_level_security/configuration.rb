@@ -18,9 +18,10 @@ module ActiveRecord
   module MysqlRowLevelSecurity
     class Configuration
       DEFAULT_TABLE_CALLBACK = '\k<table>'
+      DEFAULT_QUERY_TYPES = %w[SELECT]
       NAME = 'MysqlRowLevelSecurity'
 
-      attr_reader :tables, :sql_variables, :error_callback
+      attr_reader :tables, :sql_variables, :error_callback, :query_types_regex
       def initialize
         @tables = []
         @sql_replacement = DEFAULT_TABLE_CALLBACK
@@ -70,6 +71,17 @@ module ActiveRecord
         raise 'sql_replacement string must be empty or include "\k<table>"' unless regex_callback.include?('\k<table>')
         reset_cache
         @sql_replacement = regex_callback
+      end
+
+      def query_types_match?(query)
+        self.query_types = DEFAULT_QUERY_TYPES unless query_types_regex
+        !!(query =~ query_types_regex)
+      end
+
+      def query_types=(types)
+        return if @query_types == types
+        @query_types = types
+        @query_types_regex = Regexp.new(/^#{types.join('|')}/i)
       end
 
       def error(&block)
