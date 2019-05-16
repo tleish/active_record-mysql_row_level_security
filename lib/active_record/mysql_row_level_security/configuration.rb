@@ -18,6 +18,7 @@ module ActiveRecord
   module MysqlRowLevelSecurity
     class Configuration
       DEFAULT_TABLE_CALLBACK = '\k<table>'
+      SKIP_QUERIES_REGEX = /USE INDEX/i
       DEFAULT_QUERY_TYPES = %w[SELECT]
       NAME = 'MysqlRowLevelSecurity'
 
@@ -75,7 +76,7 @@ module ActiveRecord
 
       def query_types_match?(query)
         self.query_types = DEFAULT_QUERY_TYPES unless query_types_regex
-        !!(query =~ query_types_regex)
+        !!(query =~ query_types_regex) && !(query =~ SKIP_QUERIES_REGEX)
       end
 
       def query_types=(types)

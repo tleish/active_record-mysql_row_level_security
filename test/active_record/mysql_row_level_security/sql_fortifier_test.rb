@@ -77,6 +77,18 @@ describe ActiveRecord::MysqlRowLevelSecurity::SqlFortifier do
       assert_equal 'DELETE comments', sql_fortifier.to_s
     end
 
+    it 'does not modify queries with USE INDEX' do
+      user = ActiveRecord::MysqlRowLevelSecurity::RowUserFake.new
+      user.current_master_org_id = 1
+      ActiveRecord::MysqlRowLevelSecurity.configure do |config|
+        config.tables = %w[comments]
+        config.sql_replacement = 'my_\k<table>_view'
+        config.sql_variables = { my_var: 1 }
+      end
+      sql_fortifier = ActiveRecord::MysqlRowLevelSecurity::SqlFortifier.for(sql: 'SELECT * FROM comments USE INDEX my_comments', configuration: ActiveRecord::MysqlRowLevelSecurity.configuration)
+      assert_equal 'SELECT * FROM comments USE INDEX my_comments', sql_fortifier.to_s
+    end
+
     it 'does not modify queries beginning with the SHOW command' do
       user = ActiveRecord::MysqlRowLevelSecurity::RowUserFake.new
       user.current_master_org_id = 1
